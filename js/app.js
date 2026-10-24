@@ -560,12 +560,20 @@ class RoomStudioApp {
     this.pushHistory('حذف غرفة');
   }
 
+  // ==================== فحص ما إذا كان العنصر باباً أو نافذة ====================
+  isDoorOrWindow(catalogId) {
+    return ['door_wood', 'door_double', 'door_sliding_glass', 'window_glass'].includes(catalogId);
+  }
+
   // ==================== إضافة وتحديث قطع الأثاث ====================
   addFurnitureItem(catalogId, customProps = {}, recordHistory = true) {
     const catItem = window.FURNITURE_CATALOG.find(item => item.id === catalogId);
     if (!catItem) return null;
 
     const targetRoom = this.activeRoom;
+    const isOpeningItem = this.isDoorOrWindow(catItem.id);
+    const defaultOpenType = (catItem.id === 'door_sliding_glass' || catItem.id === 'window_glass') ? 'sliding' : 'hinged';
+    const defaultHingeSide = catItem.id === 'door_double' ? 'both' : 'right';
 
     const itemData = {
       uid: customProps.uid || ('item_' + Date.now() + '_' + Math.floor(Math.random() * 10000)),
@@ -579,7 +587,13 @@ class RoomStudioApp {
       z: customProps.z ?? targetRoom.offsetZ,
       rotation: customProps.rotation ?? 0,
       color: customProps.color ?? catItem.color,
-      secondaryColor: customProps.secondaryColor ?? catItem.secondaryColor
+      secondaryColor: customProps.secondaryColor ?? catItem.secondaryColor,
+      ...(isOpeningItem ? {
+        openType: customProps.openType || defaultOpenType,
+        openDirection: customProps.openDirection || 'inward',
+        hingeSide: customProps.hingeSide || defaultHingeSide,
+        openRatio: typeof customProps.openRatio === 'number' ? customProps.openRatio : 65
+      } : {})
     };
 
     const containerGroup = new THREE.Group();
@@ -630,14 +644,31 @@ class RoomStudioApp {
     selectionBox.userData.ignoreRaycast = true;
     containerGroup.add(selectionBox);
 
-    // 3. لافتة المقاس تظهر فقط للقطعة المحددة (أو في وضع إظهار الأبعاد بدون إعاقة النقر)
+    // 3. لافتة المقاس ومدى الفتح (تظهر للقطعة بدون إعاقة النقر)
     if (this.settings.showDimensions) {
-      const dimText = `${data.width}×${data.depth} سم`;
+      let dimText = `${data.width}×${data.depth} سم`;
+      let badgeBorder = isCurrentlySelected ? '#38bdf8' : '#10b981';
+      let badgeBg = isCurrentlySelected ? 'rgba(2, 132, 199, 0.95)' : 'rgba(15, 23, 42, 0.78)';
+
+      if (this.isDoorOrWindow(data.catalogId)) {
+        const metrics = this.getDoorWindowMetrics(data);
+        if (data.openType === 'sliding') {
+          dimText = `سحب ${data.width}سم (صافي ${metrics.clearOpeningCm}سم)`;
+        } else {
+          dimText = `${data.width}سم • مدى الفتح: ${metrics.swingRadiusCm}سم`;
+        }
+        if (data._hasSwingCollision) {
+          dimText = `⚠️ عائق فتح! (${metrics.swingRadiusCm}سم)`;
+          badgeBorder = '#f43f5e';
+          badgeBg = 'rgba(159, 18, 57, 0.95)';
+        }
+      }
+
       const badge = window.ProceduralBuilder.createLabelSprite(
         dimText,
-        isCurrentlySelected ? 'rgba(2, 132, 199, 0.95)' : 'rgba(15, 23, 42, 0.78)',
-        isCurrentlySelected ? '#38bdf8' : '#10b981',
-        isCurrentlySelected ? 0.52 : 0.40
+        badgeBg,
+        badgeBorder,
+        isCurrentlySelected ? 0.54 : 0.42
       );
       badge.position.set(0, H + 0.22, 0);
       badge.name = 'dimBadge';
@@ -646,14 +677,125 @@ class RoomStudioApp {
     }
   }
 
+  /**
+   * حساب مقاسات الفتح ومساحة التأرجح وفحص التصادم مع الأثاث المجاور للأبواب والنوافذ
+   */
+  getDoorWindowMetrics(data) {
+    const innerWidthCm = Math.max(20, data.width - 10);
+    const openType = data.openType || ((data.catalogId === 'door_sliding_glass' || data.catalogId === 'window_glass') ? 'sliding' : 'hinged');
+    const hingeSide = data.hingeSide || (data.catalogId === 'door_double' ? 'both' : 'right');
+
+    if (openType === 'sliding') {
+      const clearOpeningCm = Math.round(innerWidthCm * 0.48);
+      return {
+        openType: 'sliding',
+        swingRadiusCm: 0,
+        clearOpeningCm,
+        sweptAreaM2: 0
+      };
+    }
+
+    const swingRadiusCm = hingeSide === 'both' ? Math.round(innerWidthCm / 2) : Math.round(innerWidthCm);
+    const rMeters = swingRadiusCm / 100;
+    const sweptAreaM2 = hingeSide === 'both'
+      ? 2 * (Math.PI * rMeters * rMeters) / 4
+      : (Math.PI * rMeters * rMeters) / 4;
+
+    return {
+      openType: 'hinged',
+      swingRadiusCm,
+      clearOpeningCm: Math.round(innerWidthCm),
+      sweptAreaM2
+    };
+  }
+
+  /**
+   * فحص ما إذا كان قوس فتح الباب أو النافذة يصطدم بأي قطعة أثاث أخرى في الغرفة
+   */
+  evaluateAllDoorSwingCollisions() {
+    if (!this.items || this.items.length === 0) return;
+
+    this.items.forEach(doorGroup => {
+      const d = doorGroup.userData.itemData;
+      if (!this.isDoorOrWindow(d.catalogId)) return;
+
+      const metrics = this.getDoorWindowMetrics(d);
+      const prevCollision = Boolean(d._hasSwingCollision);
+
+      if (metrics.openType === 'sliding' || metrics.swingRadiusCm <= 2) {
+        d._hasSwingCollision = false;
+        d._collidingNames = [];
+        if (prevCollision !== d._hasSwingCollision) {
+          this.rebuildItemVisuals(doorGroup);
+        }
+        return;
+      }
+
+      // حساب المستطيل العالمي لمنطقة مسح الباب أثناء فتحه (Swing Clearance Zone in World Cm)
+      const rad = THREE.MathUtils.degToRad(d.rotation);
+      const dirSign = (d.openDirection || 'inward') === 'outward' ? -1 : 1;
+      const swingR = metrics.swingRadiusCm;
+
+      // المتجه الأمامي لاتجاه فتح الباب في إحداثيات الغرفة
+      const normalX = Math.sin(rad) * dirSign;
+      const normalZ = Math.cos(rad) * dirSign;
+
+      // مركز منطقة مسح القوس يقع أمام الباب بنصف مدى الفتح
+      const zoneCenterX = d.x + normalX * (d.depth / 2 + swingR * 0.5);
+      const zoneCenterZ = d.z + normalZ * (d.depth / 2 + swingR * 0.5);
+
+      const cos = Math.abs(Math.cos(rad));
+      const sin = Math.abs(Math.sin(rad));
+      const zoneHalfW = ((d.width * 0.92) * cos + swingR * sin) / 2;
+      const zoneHalfD = ((d.width * 0.92) * sin + swingR * cos) / 2;
+
+      const doorMinY = d.elevation || 0;
+      const doorMaxY = doorMinY + d.height;
+
+      const collidingNames = [];
+
+      this.items.forEach(otherGroup => {
+        if (otherGroup === doorGroup) return;
+        const o = otherGroup.userData.itemData;
+        if (o.catalogId === 'rug_large') return; // السجاد الأرضي لا يعيق حركة الباب
+        if (this.isDoorOrWindow(o.catalogId)) return;
+
+        // فحص التداخل الرأسي (مثلاً تكييف عالي فوق الباب لا يعيق فتحه)
+        const otherMinY = o.elevation || 0;
+        const otherMaxY = otherMinY + o.height;
+        if (otherMaxY <= doorMinY + 5 || otherMinY >= doorMaxY - 5) return;
+
+        const { effWidth, effDepth } = this.getRotatedFootprintCm(o);
+        const oHalfW = effWidth / 2;
+        const oHalfD = effDepth / 2;
+
+        const overlapX = Math.abs(zoneCenterX - o.x) < (zoneHalfW + oHalfW - 4);
+        const overlapZ = Math.abs(zoneCenterZ - o.z) < (zoneHalfD + oHalfD - 4);
+
+        if (overlapX && overlapZ) {
+          collidingNames.push(o.name);
+        }
+      });
+
+      d._hasSwingCollision = collidingNames.length > 0;
+      d._collidingNames = collidingNames;
+
+      if (prevCollision !== d._hasSwingCollision) {
+        this.rebuildItemVisuals(doorGroup);
+      }
+    });
+  }
+
   updateItemTransform(containerGroup) {
     const data = containerGroup.userData.itemData;
     containerGroup.position.set(data.x / 100, data.elevation / 100, data.z / 100);
     containerGroup.rotation.y = THREE.MathUtils.degToRad(data.rotation);
 
+    this.evaluateAllDoorSwingCollisions();
     this.checkItemBounds(containerGroup);
     if (this.selectedItem === containerGroup) {
       this.drawClearanceLines(containerGroup);
+      this.syncDoorWindowInspectorUI();
     }
   }
 
@@ -838,6 +980,115 @@ class RoomStudioApp {
 
     const rotLabel = document.getElementById('rotation-val-label');
     if (rotLabel) rotLabel.textContent = `${Math.round(d.rotation)}°`;
+
+    this.syncDoorWindowInspectorUI();
+  }
+
+  /**
+   * مزامنة لوحة التحكم الخاصة بفتح الأبواب والنوافذ وحساب مساحة الفتح
+   */
+  syncDoorWindowInspectorUI() {
+    const panel = document.getElementById('door-window-controls');
+    if (!panel) return;
+
+    if (!this.selectedItem) {
+      panel.classList.add('hidden');
+      return;
+    }
+
+    const d = this.selectedItem.userData.itemData;
+    if (!this.isDoorOrWindow(d.catalogId)) {
+      panel.classList.add('hidden');
+      return;
+    }
+
+    panel.classList.remove('hidden');
+
+    const defaultOpenType = (d.catalogId === 'door_sliding_glass' || d.catalogId === 'window_glass') ? 'sliding' : 'hinged';
+    const openType = d.openType || defaultOpenType;
+    const openDirection = d.openDirection || 'inward';
+    const hingeSide = d.hingeSide || (d.catalogId === 'door_double' ? 'both' : 'right');
+    const openRatio = typeof d.openRatio === 'number' ? d.openRatio : 65;
+
+    const ratioSlider = document.getElementById('item-open-ratio');
+    if (ratioSlider) ratioSlider.value = Math.round(openRatio);
+
+    const badgeEl = document.getElementById('door-open-percent-badge');
+    if (badgeEl) {
+      if (openRatio <= 0) {
+        badgeEl.textContent = 'مغلق 0%';
+      } else if (openType === 'hinged') {
+        const deg = Math.round((openRatio / 100) * 90);
+        badgeEl.textContent = `مفتوح ${openRatio}% (${deg}°)`;
+      } else {
+        badgeEl.textContent = `منزلق ${openRatio}%`;
+      }
+    }
+
+    // تحديث حالة أزرار نوع الفتح (مفصلات / سحب)
+    document.querySelectorAll('.door-opentype-btn').forEach(btn => {
+      const active = btn.dataset.opentype === openType;
+      btn.className = `door-opentype-btn py-1.5 px-2 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1 ${
+        active
+          ? 'bg-sky-600 text-white border-sky-400 shadow-sm'
+          : 'bg-slate-900 text-slate-300 border-slate-800 hover:border-slate-600'
+      }`;
+    });
+
+    // إظهار أو إخفاء اتجاه التأرجح عند اختيار مفصلات أو سحب
+    const swingDirGroup = document.getElementById('door-swing-dir-group');
+    if (swingDirGroup) {
+      swingDirGroup.classList.toggle('opacity-50', openType === 'sliding');
+    }
+
+    // تحديث حالة أزرار اتجاه الفتح (للداخل / للخارج)
+    document.querySelectorAll('.door-opendir-btn').forEach(btn => {
+      const active = btn.dataset.opendir === openDirection;
+      btn.className = `door-opendir-btn py-1.5 px-2 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1 ${
+        active
+          ? 'bg-sky-600 text-white border-sky-400 shadow-sm'
+          : 'bg-slate-900 text-slate-300 border-slate-800 hover:border-slate-600'
+      }`;
+    });
+
+    // تحديث حالة أزرار جهة المفصلة أو اتجاه السحب (يمين / يسار / ضلفتين)
+    document.querySelectorAll('.door-hinge-btn').forEach(btn => {
+      const active = btn.dataset.hingeside === hingeSide;
+      btn.className = `door-hinge-btn py-1.5 px-1.5 rounded-xl text-[11px] font-bold border transition-all ${
+        active
+          ? 'bg-sky-600 text-white border-sky-400 shadow-sm'
+          : 'bg-slate-900 text-slate-300 border-slate-800 hover:border-slate-600'
+      }`;
+    });
+
+    // تحديث أرقام مساحة الفتح والتنبيه بالتعارض مع الأثاث
+    const metrics = this.getDoorWindowMetrics(d);
+    const depthEl = document.getElementById('door-clearance-depth');
+    const areaEl = document.getElementById('door-clearance-area');
+    const alertEl = document.getElementById('door-collision-alert');
+
+    if (depthEl) {
+      depthEl.textContent = metrics.openType === 'sliding'
+        ? `0 سم (انزلاق داخلي • فتحة ${metrics.clearOpeningCm} سم)`
+        : `${metrics.swingRadiusCm} سم داخل الغرفة`;
+    }
+    if (areaEl) {
+      areaEl.textContent = metrics.openType === 'sliding'
+        ? '0.00 م² (يوفر المساحة 100%)'
+        : `${metrics.sweptAreaM2.toFixed(2)} م²`;
+    }
+    if (alertEl) {
+      if (metrics.openType === 'sliding') {
+        alertEl.className = 'pt-1 border-t border-slate-800/80 text-[11px] font-bold text-emerald-400 flex items-center gap-1';
+        alertEl.innerHTML = '<span>✨</span><span>نظام السحب الجرار لا يستهلك أي مساحة أمام الباب/النافذة</span>';
+      } else if (d._hasSwingCollision && d._collidingNames?.length) {
+        alertEl.className = 'pt-1 border-t border-slate-800/80 text-[11px] font-bold text-rose-400 flex items-center gap-1';
+        alertEl.innerHTML = `<span>⚠️</span><span>قوس الفتح يصطدم بـ: ${d._collidingNames.join('، ')}</span>`;
+      } else {
+        alertEl.className = 'pt-1 border-t border-slate-800/80 text-[11px] font-bold text-emerald-400 flex items-center gap-1';
+        alertEl.innerHTML = '<span>✅</span><span>مسار الفتح خالٍ ولا يصطدم بأي أثاث</span>';
+      }
+    }
   }
 
   updateRoomStatsUI() {
@@ -1294,6 +1545,95 @@ class RoomStudioApp {
       this.validateAllItemsBounds();
     });
 
+    // زر فتح / إغلاق جميع الأبواب والنوافذ في المنزل بنقرة واحدة
+    document.getElementById('btn-toggle-all-doors')?.addEventListener('click', () => {
+      const doorItems = this.items.filter(g => this.isDoorOrWindow(g.userData.itemData.catalogId));
+      if (doorItems.length === 0) return;
+
+      const anyClosedOrHalf = doorItems.some(g => (g.userData.itemData.openRatio ?? 65) < 90);
+      const targetRatio = anyClosedOrHalf ? 100 : 0;
+
+      doorItems.forEach(g => {
+        g.userData.itemData.openRatio = targetRatio;
+        this.rebuildItemVisuals(g);
+        this.updateItemTransform(g);
+      });
+
+      const lbl = document.getElementById('all-doors-btn-label');
+      if (lbl) {
+        lbl.textContent = targetRatio === 100 ? 'إغلاق الأبواب والنوافذ' : 'فتح الأبواب والنوافذ';
+      }
+      this.syncDoorWindowInspectorUI();
+      this.pushHistory(targetRatio === 100 ? 'فتح كافة الأبواب والنوافذ' : 'إغلاق كافة الأبواب والنوافذ');
+    });
+
+    // عناصر التحكم في فتح الأبواب والنوافذ (نسبة الفتح، مفصلات/سحب، اتجاه الفتح، جهة المفصلة)
+    const applySelectedDoorChange = (mutatorFn, historyLabel) => {
+      if (!this.selectedItem) return;
+      const d = this.selectedItem.userData.itemData;
+      if (!this.isDoorOrWindow(d.catalogId)) return;
+      mutatorFn(d);
+      this.evaluateAllDoorSwingCollisions();
+      this.rebuildItemVisuals(this.selectedItem);
+      this.updateItemTransform(this.selectedItem);
+      this.syncDoorWindowInspectorUI();
+      if (historyLabel) {
+        this.pushHistory(historyLabel);
+      }
+    };
+
+    const openRatioSlider = document.getElementById('item-open-ratio');
+    if (openRatioSlider) {
+      openRatioSlider.addEventListener('input', () => {
+        applySelectedDoorChange(d => {
+          d.openRatio = Number(openRatioSlider.value);
+        }, '');
+      });
+      openRatioSlider.addEventListener('change', () => {
+        this.pushHistory('تعديل نسبة فتح الباب/النافذة');
+      });
+    }
+
+    document.getElementById('btn-door-close')?.addEventListener('click', () => {
+      applySelectedDoorChange(d => { d.openRatio = 0; }, 'إغلاق الباب/النافذة');
+    });
+    document.getElementById('btn-door-half')?.addEventListener('click', () => {
+      applySelectedDoorChange(d => { d.openRatio = 50; }, 'فتح نصف الباب/النافذة');
+    });
+    document.getElementById('btn-door-open')?.addEventListener('click', () => {
+      applySelectedDoorChange(d => { d.openRatio = 100; }, 'فتح الباب/النافذة بالكامل');
+    });
+
+    document.querySelectorAll('.door-opentype-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const newType = btn.dataset.opentype;
+        applySelectedDoorChange(d => {
+          d.openType = newType;
+          if ((d.openRatio ?? 0) === 0) d.openRatio = 75;
+        }, `تغيير نوع الفتح إلى ${newType === 'sliding' ? 'سحب' : 'مفصلات'}`);
+      });
+    });
+
+    document.querySelectorAll('.door-opendir-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const newDir = btn.dataset.opendir;
+        applySelectedDoorChange(d => {
+          d.openDirection = newDir;
+          if ((d.openRatio ?? 0) === 0) d.openRatio = 75;
+        }, `تغيير اتجاه الفتح إلى ${newDir === 'outward' ? 'للخارج' : 'للداخل'}`);
+      });
+    });
+
+    document.querySelectorAll('.door-hinge-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const newHinge = btn.dataset.hingeside;
+        applySelectedDoorChange(d => {
+          d.hingeSide = newHinge;
+          if ((d.openRatio ?? 0) === 0) d.openRatio = 75;
+        }, 'تغيير جهة المفصلة/السحب');
+      });
+    });
+
     document.getElementById('btn-toggle-light')?.addEventListener('click', () => {
       const next = this.settings.lightingMode === 'day' ? 'night' : 'day';
       this.setLightingMode(next);
@@ -1387,7 +1727,11 @@ class RoomStudioApp {
       z: d.z + 35,
       rotation: d.rotation,
       color: d.color,
-      secondaryColor: d.secondaryColor
+      secondaryColor: d.secondaryColor,
+      openType: d.openType,
+      openDirection: d.openDirection,
+      hingeSide: d.hingeSide,
+      openRatio: d.openRatio
     }, true);
   }
 

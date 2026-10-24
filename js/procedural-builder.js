@@ -551,26 +551,229 @@ window.ProceduralBuilder = {
       }
 
       case 'door_wood':
-      case 'door_double': {
-        addBox(W, H, D, 0, H / 2, 0, mainMat);
-        if (type === 'door_double') {
-          addBox(W * 0.44, H * 0.85, D + 0.02, -W * 0.24, H * 0.5, 0, secMat);
-          addBox(W * 0.44, H * 0.85, D + 0.02, W * 0.24, H * 0.5, 0, secMat);
-          addBox(0.04, 0.22, D + 0.08, -0.06, H * 0.48, 0, metalMat);
-          addBox(0.04, 0.22, D + 0.08, 0.06, H * 0.48, 0, metalMat);
-        } else {
-          addBox(W * 0.84, H * 0.42, D + 0.02, 0, H * 0.72, 0, secMat);
-          addBox(W * 0.84, H * 0.38, D + 0.02, 0, H * 0.25, 0, secMat);
-          addBox(0.12, 0.03, D + 0.08, W * 0.35, H * 0.48, 0, metalMat);
-        }
-        break;
-      }
-
+      case 'door_double':
       case 'door_sliding_glass':
       case 'window_glass': {
-        addBox(W, H, D, 0, H / 2, 0, mainMat);
-        addBox(W * 0.9, H * 0.88, D + 0.02, 0, H / 2, 0, glassMat);
-        addBox(0.04, H, D + 0.03, 0, H / 2, 0, mainMat);
+        const isWindow = type === 'window_glass';
+        const isGlassDoor = type === 'door_sliding_glass';
+        const defaultOpenType = (type === 'door_sliding_glass' || type === 'window_glass') ? 'sliding' : 'hinged';
+        const openType = itemData.openType || defaultOpenType; // 'hinged' | 'sliding'
+        const openDirection = itemData.openDirection || 'inward'; // 'inward' (+Z) | 'outward' (-Z)
+        const defaultHinge = type === 'door_double' ? 'both' : 'right';
+        const hingeSide = itemData.hingeSide || defaultHinge; // 'right' | 'left' | 'both'
+        const openRatio = typeof itemData.openRatio === 'number' ? itemData.openRatio : 65; // 0..100
+        const ratio01 = Math.max(0, Math.min(1, openRatio / 100));
+        const dirSign = openDirection === 'outward' ? -1 : 1;
+        const hasCollision = Boolean(itemData._hasSwingCollision);
+
+        // 1. الحلق / الإطار الثابت المحيط بالباب أو النافذة (Outer Frame)
+        const frameT = Math.min(0.055, W * 0.06);
+        const frameD = D + 0.02;
+        // القائم الأيسر والأيمن والعتبة العلوية
+        addBox(frameT, H, frameD, -W / 2 + frameT / 2, H / 2, 0, mainMat);
+        addBox(frameT, H, frameD, W / 2 - frameT / 2, H / 2, 0, mainMat);
+        addBox(W, frameT, frameD, 0, H - frameT / 2, 0, mainMat);
+        if (isWindow) {
+          // جلسة النافذة السفلية (Window Sill)
+          addBox(W + 0.06, frameT, frameD + 0.04, 0, frameT / 2, 0, mainMat);
+        }
+
+        const innerW = Math.max(0.2, W - frameT * 2);
+        const innerH = Math.max(0.2, H - frameT - (isWindow ? frameT : 0.01));
+        const leafCenterY = (isWindow ? frameT : 0.01) + innerH / 2;
+        const panelThickness = Math.min(0.045, Math.max(0.03, D * 0.32));
+
+        // دالة مساعدة لبناء ضلفة باب أو نافذة واحدة داخل مجموعة قابلة للتحريك أو التدوير
+        const createLeafPanel = (leafW, isRightLeaf) => {
+          const leafGroup = new THREE.Group();
+
+          if (isWindow || isGlassDoor) {
+            // إطار الضلفة الزجاجية
+            const sashT = Math.min(0.04, leafW * 0.12);
+            const topBar = new THREE.Mesh(new THREE.BoxGeometry(leafW, sashT, panelThickness), mainMat);
+            topBar.position.set(0, innerH / 2 - sashT / 2, 0);
+            const botBar = new THREE.Mesh(new THREE.BoxGeometry(leafW, sashT, panelThickness), mainMat);
+            botBar.position.set(0, -innerH / 2 + sashT / 2, 0);
+            const leftBar = new THREE.Mesh(new THREE.BoxGeometry(sashT, innerH, panelThickness), mainMat);
+            leftBar.position.set(-leafW / 2 + sashT / 2, 0, 0);
+            const rightBar = new THREE.Mesh(new THREE.BoxGeometry(sashT, innerH, panelThickness), mainMat);
+            rightBar.position.set(leafW / 2 - sashT / 2, 0, 0);
+
+            const glassPane = new THREE.Mesh(
+              new THREE.BoxGeometry(Math.max(0.05, leafW - sashT * 2), Math.max(0.05, innerH - sashT * 2), panelThickness * 0.4),
+              glassMat
+            );
+            const handleMesh = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.14, panelThickness + 0.03), metalMat);
+            handleMesh.position.set(isRightLeaf ? -leafW * 0.38 : leafW * 0.38, 0, 0);
+
+            [topBar, botBar, leftBar, rightBar, glassPane, handleMesh].forEach(m => {
+              m.castShadow = true;
+              m.receiveShadow = true;
+              m.userData.isHitTarget = true;
+              leafGroup.add(m);
+            });
+          } else {
+            // ضلفة باب خشبي بحشوات ومقبض معدني
+            const coreMesh = new THREE.Mesh(new THREE.BoxGeometry(leafW, innerH, panelThickness), mainMat);
+            const upperInset = new THREE.Mesh(new THREE.BoxGeometry(leafW * 0.78, innerH * 0.38, panelThickness + 0.012), secMat);
+            upperInset.position.set(0, innerH * 0.22, 0);
+            const lowerInset = new THREE.Mesh(new THREE.BoxGeometry(leafW * 0.78, innerH * 0.34, panelThickness + 0.012), secMat);
+            lowerInset.position.set(0, -innerH * 0.22, 0);
+
+            const handleX = isRightLeaf ? -leafW * 0.36 : leafW * 0.36;
+            const handleMesh = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.028, panelThickness + 0.055), metalMat);
+            handleMesh.position.set(handleX, -innerH * 0.03, 0);
+
+            [coreMesh, upperInset, lowerInset, handleMesh].forEach(m => {
+              m.castShadow = true;
+              m.receiveShadow = true;
+              m.userData.isHitTarget = true;
+              leafGroup.add(m);
+            });
+          }
+          return leafGroup;
+        };
+
+        // 2. تركيب الضلف وحركتها (مفصلات Hinged أو سحب Sliding)
+        const floorArcY = -( (itemData.elevation || 0) / 100 ) + 0.015; // رسم قوس المساحة على أرضية الغرفة دائماً
+        const localArcY = isWindow ? 0.02 : Math.max(0.015, floorArcY);
+        const arcColorHex = hasCollision ? 0xf43f5e : (openType === 'sliding' ? 0x10b981 : 0x38bdf8);
+
+        if (openType === 'hinged') {
+          const maxAngleRad = THREE.MathUtils.degToRad((openRatio / 100) * 90);
+          const full90Rad = Math.PI / 2;
+
+          // دالة لرسم قوس ومساحة تأرجح الضلفة المفصلية على الأرضية (Swing Clearance Sector)
+          const addSwingArcVisual = (pivotX, pivotZ, radius, startAngle, endAngle, currentAngle) => {
+            const segments = 28;
+            const ptsOutline = [new THREE.Vector3(pivotX, localArcY, pivotZ)];
+            for (let i = 0; i <= segments; i++) {
+              const ang = startAngle + (endAngle - startAngle) * (i / segments);
+              const px = pivotX + Math.cos(ang) * radius;
+              const pz = pivotZ + Math.sin(ang) * radius;
+              ptsOutline.push(new THREE.Vector3(px, localArcY, pz));
+            }
+            ptsOutline.push(new THREE.Vector3(pivotX, localArcY, pivotZ));
+
+            // خط القوس الهندسي الكامل (90 درجة) لمعرفة أقصى مدى للفتح
+            const arcLineMat = new THREE.LineBasicMaterial({
+              color: arcColorHex,
+              transparent: true,
+              opacity: 0.9
+            });
+            const arcLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints(ptsOutline), arcLineMat);
+            arcLine.userData.ignoreRaycast = true;
+            group.add(arcLine);
+
+            // تظليل أرضي شفاف لمساحة مسح الباب (Swept Floor Area Sector)
+            const shapeGeometry = new THREE.BufferGeometry();
+            const vertices = [];
+            for (let i = 0; i < segments; i++) {
+              const a1 = startAngle + (endAngle - startAngle) * (i / segments);
+              const a2 = startAngle + (endAngle - startAngle) * ((i + 1) / segments);
+              vertices.push(
+                pivotX, localArcY - 0.003, pivotZ,
+                pivotX + Math.cos(a1) * radius, localArcY - 0.003, pivotZ + Math.sin(a1) * radius,
+                pivotX + Math.cos(a2) * radius, localArcY - 0.003, pivotZ + Math.sin(a2) * radius
+              );
+            }
+            shapeGeometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+            const sectorMat = new THREE.MeshBasicMaterial({
+              color: arcColorHex,
+              transparent: true,
+              opacity: hasCollision ? 0.34 : 0.18,
+              side: THREE.DoubleSide,
+              depthWrite: false
+            });
+            const sectorMesh = new THREE.Mesh(shapeGeometry, sectorMat);
+            sectorMesh.userData.ignoreRaycast = true;
+            group.add(sectorMesh);
+          };
+
+          if (hingeSide === 'both') {
+            // ضلفتان تفتحان من الوسط نحو اليمين واليسار
+            const halfLeafW = (innerW - 0.01) / 2;
+            const pivotZ = dirSign * (D / 2);
+
+            // الضلفة اليسرى (مفصلتها في أقصى اليسار)
+            const leftPivot = new THREE.Group();
+            leftPivot.position.set(-innerW / 2, leafCenterY, pivotZ);
+            const leftLeaf = createLeafPanel(halfLeafW, false);
+            leftLeaf.position.set(halfLeafW / 2, 0, 0);
+            leftPivot.rotation.y = -dirSign * maxAngleRad;
+            leftPivot.add(leftLeaf);
+            group.add(leftPivot);
+
+            // الضلفة اليمنى (مفصلتها في أقصى اليمين)
+            const rightPivot = new THREE.Group();
+            rightPivot.position.set(innerW / 2, leafCenterY, pivotZ);
+            const rightLeaf = createLeafPanel(halfLeafW, true);
+            rightLeaf.position.set(-halfLeafW / 2, 0, 0);
+            rightPivot.rotation.y = dirSign * maxAngleRad;
+            rightPivot.add(rightLeaf);
+            group.add(rightPivot);
+
+            // رسم قوسي الفتح للضلفتين
+            addSwingArcVisual(-innerW / 2, pivotZ, halfLeafW, 0, dirSign * full90Rad, dirSign * maxAngleRad);
+            addSwingArcVisual(innerW / 2, pivotZ, halfLeafW, Math.PI, Math.PI - dirSign * full90Rad, Math.PI - dirSign * maxAngleRad);
+          } else {
+            // ضلفة مفردة تفتح من اليمين أو اليسار
+            const isRightHinge = hingeSide === 'right';
+            const pivotX = isRightHinge ? innerW / 2 : -innerW / 2;
+            const pivotZ = dirSign * (D / 2);
+
+            const hingePivot = new THREE.Group();
+            hingePivot.position.set(pivotX, leafCenterY, pivotZ);
+
+            const leaf = createLeafPanel(innerW - 0.008, isRightHinge);
+            leaf.position.set(isRightHinge ? -innerW / 2 : innerW / 2, 0, 0);
+            hingePivot.rotation.y = isRightHinge ? (dirSign * maxAngleRad) : (-dirSign * maxAngleRad);
+            hingePivot.add(leaf);
+            group.add(hingePivot);
+
+            if (isRightHinge) {
+              addSwingArcVisual(pivotX, pivotZ, innerW, Math.PI, Math.PI - dirSign * full90Rad, Math.PI - dirSign * maxAngleRad);
+            } else {
+              addSwingArcVisual(pivotX, pivotZ, innerW, 0, dirSign * full90Rad, dirSign * maxAngleRad);
+            }
+          }
+        } else {
+          // آلية فتح سحب / جرار (Sliding Mechanism)
+          const halfLeafW = innerW / 2 + 0.02;
+          const maxSlideDist = (innerW / 2 - 0.06) * ratio01;
+
+          if (hingeSide === 'both') {
+            // ضلفتان تنزلقان للجانبين
+            const leftLeaf = createLeafPanel(halfLeafW, false);
+            leftLeaf.position.set(-innerW / 4 - maxSlideDist * 0.5, leafCenterY, -0.015);
+            const rightLeaf = createLeafPanel(halfLeafW, true);
+            rightLeaf.position.set(innerW / 4 + maxSlideDist * 0.5, leafCenterY, 0.015);
+            group.add(leftLeaf, rightLeaf);
+          } else {
+            const isSlideRight = hingeSide === 'right';
+            const fixedLeaf = createLeafPanel(halfLeafW, !isSlideRight);
+            fixedLeaf.position.set(isSlideRight ? innerW / 4 : -innerW / 4, leafCenterY, -0.018);
+
+            const movingLeaf = createLeafPanel(halfLeafW, isSlideRight);
+            const startX = isSlideRight ? -innerW / 4 : innerW / 4;
+            const slideDelta = isSlideRight ? maxSlideDist : -maxSlideDist;
+            movingLeaf.position.set(startX + slideDelta, leafCenterY, 0.018);
+            group.add(fixedLeaf, movingLeaf);
+          }
+
+          // رسم مسار السحب على الأرضية / الإطار لتوضيح عدم استهلاك مساحة تأرجح
+          const trackZ = dirSign * (D / 2 + 0.08);
+          const trackPts = [
+            new THREE.Vector3(-innerW / 2, localArcY, trackZ),
+            new THREE.Vector3(innerW / 2, localArcY, trackZ)
+          ];
+          const trackLine = new THREE.Line(
+            new THREE.BufferGeometry().setFromPoints(trackPts),
+            new THREE.LineBasicMaterial({ color: 0x10b981 })
+          );
+          trackLine.userData.ignoreRaycast = true;
+          group.add(trackLine);
+        }
         break;
       }
 
