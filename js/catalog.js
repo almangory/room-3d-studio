@@ -743,3 +743,107 @@ window.HOUSE_PRESETS = {
     ]
   }
 };
+
+// ==================== باليتات التناسق اللوني العالمية وقاعدة 60-30-10 ====================
+window.HARMONY_PALETTES = [
+  {
+    id: 'japandi_warm',
+    name: '🍂 ياباندي وبيج دافئ (Japandi Warmth)',
+    category: 'هادئ وعصري',
+    description: 'مزيج البساطة اليابانية والراحة الإسكندنافية بتدرجات البيج والكتان وأخشاب البلوط الطبيعية.',
+    dominant: { wallId: 'cream_beige', floorId: 'oak_parquet', hex: '#f5ebe0', label: '60% دهان كريمي وأرضية بلوط' },
+    secondary: { furnitureColor: '#d6ccc2', woodTone: '#a97142', rugPrimary: '#e6ccb2', rugAccent: '#7f5539', rugPattern: 'berber', label: '30% كنب وسجاد بيج' },
+    accent: { beddingColor: '#ffffff', pillowColor: '#b08968', curtainColor: '#e3d5ca', decorColor: '#5c3a21', label: '10% مفرش أبيض ولمسات كاكاو' },
+    colors: ['#f5ebe0', '#c89d6c', '#d6ccc2', '#7f5539']
+  },
+  {
+    id: 'nordic_sage',
+    name: '🌿 إسكندنافي وميرمية هادئة (Nordic Sage)',
+    category: 'طبيعي ومنعش',
+    description: 'تناغم الأخضر الميرمية والرمادي الفاتح مع خشب الدردار يمنح رحابة وانتعاشاً طبيعياً.',
+    dominant: { wallId: 'sage_green', floorId: 'ash_light_wood', hex: '#cbd5c0', label: '60% دهان ميرمية ودردار فاتح' },
+    secondary: { furnitureColor: '#84a98c', woodTone: '#a97142', rugPrimary: '#f5ebe0', rugAccent: '#84a98c', rugPattern: 'geometric', label: '30% أثاث وسجاد زيتي وميرمية' },
+    accent: { beddingColor: '#ffffff', pillowColor: '#a3b18a', curtainColor: '#cbd5c0', decorColor: '#065f46', label: '10% وسائد خضراء ولمسات زمردية' },
+    colors: ['#cbd5c0', '#e2cfb8', '#84a98c', '#065f46']
+  },
+  {
+    id: 'royal_navy_gold',
+    name: '👑 فندقي كحلي وذهبي (Royal Navy & Gold)',
+    category: 'فندقي فاخر',
+    description: 'فخامة ملكية متوازنة بين الأزرق الكحلي العميق واللمسات الذهبية مع رخام كرارا الأبيض.',
+    dominant: { wallId: 'warm_white', floorId: 'white_marble', hex: '#f8fafc', label: '60% حوائط بيضاء ورخام كرارا' },
+    secondary: { furnitureColor: '#1e3a8a', woodTone: '#d97706', rugPrimary: '#1e3a8a', rugAccent: '#d97706', rugPattern: 'border', label: '30% كنب وسجاد كحلي ملكي' },
+    accent: { beddingColor: '#f8f5f0', pillowColor: '#d97706', curtainColor: '#1e293b', decorColor: '#eab308', label: '10% وسائد ذهبية ولمسات معدنية' },
+    colors: ['#f8fafc', '#1e3a8a', '#d97706', '#f1f5f9']
+  },
+  {
+    id: 'boho_terracotta',
+    name: '🏺 بوهيمي ترابي وتيراكوتا (Boho Earth)',
+    category: 'دافئ وترابي',
+    description: 'طاقة دافئة مستوحاة من الطين الفخاري (تيراكوتا) والخردل الدافئ مع موكيت الكراميل.',
+    dominant: { wallId: 'terracotta', floorId: 'carpet_camel', hex: '#e3d5ca', label: '60% جدران رملية وموكيت كراميل' },
+    secondary: { furnitureColor: '#ea580c', woodTone: '#6e472b', rugPrimary: '#f5ebe0', rugAccent: '#ea580c', rugPattern: 'berber', label: '30% كنب وسجاد بوهيمي برتقالي' },
+    accent: { beddingColor: '#fdba74', pillowColor: '#eab308', curtainColor: '#e3d5ca', decorColor: '#7f5539', label: '10% وسائد خردلية ولمسات فخار' },
+    colors: ['#e3d5ca', '#b08968', '#ea580c', '#eab308']
+  },
+  {
+    id: 'modern_industrial',
+    name: '🏙️ مودرن صناعي وفحم داكن (Modern Industrial)',
+    category: 'عصري جريء',
+    description: 'طابع لوفت نيويوركي مع الفحم الداكن وجلود الكراميل وخشب الجوز الصلب.',
+    dominant: { wallId: 'slate_gray', floorId: 'walnut_wood', hex: '#cbd5e1', label: '60% دهان رمادي وباركيه جوز' },
+    secondary: { furnitureColor: '#334155', woodTone: '#5c3a21', rugPrimary: '#334155', rugAccent: '#cbd5e1', rugPattern: 'geometric', label: '30% كنب رمادي أنثراسيت وسجاد مودرن' },
+    accent: { beddingColor: '#ffffff', pillowColor: '#b45309', curtainColor: '#475569', decorColor: '#1e293b', label: '10% وسائد جلد جملي ولمسات سوداء' },
+    colors: ['#cbd5e1', '#334155', '#6e472b', '#b45309']
+  },
+  {
+    id: 'emerald_cream_luxury',
+    name: '💎 زمردي ملكي وكريمي (Emerald & Cream)',
+    category: 'فندقي فاخر',
+    description: 'أناقة كلاسيكية معاصرة تمزج الأخضر الزمردي المخملي مع رخام أسود ولمسات كريمية ناعمة.',
+    dominant: { wallId: 'cream_beige', floorId: 'black_marble', hex: '#f5ebe0', label: '60% حوائط كريمية ورخام أسود' },
+    secondary: { furnitureColor: '#065f46', woodTone: '#3b2314', rugPrimary: '#065f46', rugAccent: '#f5ebe0', rugPattern: 'persian', label: '30% كنب وسجاد زمردي فارسي' },
+    accent: { beddingColor: '#f8f5f0', pillowColor: '#065f46', curtainColor: '#065f46', decorColor: '#d97706', label: '10% وسائد حريرية ولمسات نحاسية' },
+    colors: ['#f5ebe0', '#1e293b', '#065f46', '#d97706']
+  },
+  {
+    id: 'cozy_mocha_latte',
+    name: '☕ قهوة وموكا دافئة (Mocha & Latte)',
+    category: 'كلاسيك دافئ',
+    description: 'أجواء استرخاء عائلية بنكهة الموكا واللاتيه والكافيه الدافئ مع موكيت الشوكولاتة المريح.',
+    dominant: { wallId: 'cream_beige', floorId: 'carpet_mocha', hex: '#f5ebe0', label: '60% دهان كريمي وموكيت موكا' },
+    secondary: { furnitureColor: '#7f5539', woodTone: '#5c3a21', rugPrimary: '#b08968', rugAccent: '#f5ebe0', rugPattern: 'border', label: '30% أثاث كاكاو وسجاد كافيه' },
+    accent: { beddingColor: '#e3d5ca', pillowColor: '#6c584c', curtainColor: '#b08968', decorColor: '#deb887', label: '10% مفارش بيج ولمسات صنوبر' },
+    colors: ['#f5ebe0', '#6c584c', '#7f5539', '#e3d5ca']
+  },
+  {
+    id: 'pastel_serenity',
+    name: '🌸 باستيل هادئ ولافندر (Pastel Serenity)',
+    category: 'باستيل مريح',
+    description: 'سكينة بصرية مريحة للأعصاب لغرف النوم مع اللافندر الناعم والوردي البودري والأوف وايت.',
+    dominant: { wallId: 'lavender_soft', floorId: 'carpet_ivory', hex: '#ede9fe', label: '60% دهان لافندر وموكيت لؤلؤي' },
+    secondary: { furnitureColor: '#a78bfa', woodTone: '#e2cfb8', rugPrimary: '#f5f0e6', rugAccent: '#a78bfa', rugPattern: 'striped', label: '30% أثاث وسجاد لافندر مخطط' },
+    accent: { beddingColor: '#ddd6fe', pillowColor: '#f472b6', curtainColor: '#ede9fe', decorColor: '#c4b5fd', label: '10% وسائد كشمير وردية ناعمة' },
+    colors: ['#ede9fe', '#f5f0e6', '#a78bfa', '#f472b6']
+  },
+  {
+    id: 'modern_monochrome',
+    name: '♟️ مونوكروم أبيض وأسود (Modern Monochrome)',
+    category: 'عصري جريء',
+    description: 'تباين درامي قوي ونقي بين الأبيض الناصع والأسود المطفي مع أرضيات الشطرنج أو الرخام.',
+    dominant: { wallId: 'warm_white', floorId: 'kitchen_tiles', hex: '#f8fafc', label: '60% جدران ناصعة وبلاط شطرنج' },
+    secondary: { furnitureColor: '#1e293b', woodTone: '#334155', rugPrimary: '#1e293b', rugAccent: '#f8fafc', rugPattern: 'striped', label: '30% أثاث أسود وسجاد مقلم' },
+    accent: { beddingColor: '#ffffff', pillowColor: '#475569', curtainColor: '#334155', decorColor: '#64748b', label: '10% مفارش ناصعة ووسائد فحمية' },
+    colors: ['#f8fafc', '#1e293b', '#cbd5e1', '#ffffff']
+  },
+  {
+    id: 'coastal_breeze',
+    name: '🌊 نسيم ساحلي وبحري (Coastal Breeze)',
+    category: 'طبيعي ومنعش',
+    description: 'شعور بالانتعاش والهدوء مستوحى من مياه البحر المتوسط والأخشاب الفاتحة ورمال الشاطئ.',
+    dominant: { wallId: 'sky_breeze', floorId: 'ash_light_wood', hex: '#dbeafe', label: '60% حوائط سماوية وخشب فاتح' },
+    secondary: { furnitureColor: '#0284c7', woodTone: '#deb887', rugPrimary: '#bae6fd', rugAccent: '#0284c7', rugPattern: 'geometric', label: '30% كنب بترولي وسجاد سماوي' },
+    accent: { beddingColor: '#ffffff', pillowColor: '#38bdf8', curtainColor: '#dbeafe', decorColor: '#0f766e', label: '10% وسائد زرقاء ولمسات تركواز' },
+    colors: ['#dbeafe', '#e2cfb8', '#0284c7', '#38bdf8']
+  }
+];

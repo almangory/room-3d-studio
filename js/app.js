@@ -1049,6 +1049,45 @@ class RoomStudioApp {
     this.syncCurtainInspectorUI();
     this.syncBeddingInspectorUI();
     this.syncRugInspectorUI();
+    this.syncContextualHarmonySuggestions();
+  }
+
+  /**
+   * اقتراح ألوان متناسقة علمياً وفورياً للقطعة المحددة مع دهان وأرضية الغرفة
+   */
+  syncContextualHarmonySuggestions() {
+    const container = document.getElementById('item-harmonious-palette');
+    if (!container) return;
+    container.innerHTML = '';
+
+    if (!this.selectedItem || !window.ColorHarmonyEngine) return;
+    const d = this.selectedItem.userData.itemData;
+    const itemColor = d.color || '#475569';
+
+    const r = this.activeRoom || this.rooms[0];
+    const floorMatData = window.ROOM_MATERIALS.floors.find(f => f.id === r.floorId) || window.ROOM_MATERIALS.floors[0];
+    const wallData = window.ROOM_MATERIALS.walls.find(w => w.id === r.wallId) || window.ROOM_MATERIALS.walls[0];
+    const wallColor = r.customWallColor || wallData.color;
+    const floorColor = r.customFloorColor || floorMatData.color;
+
+    const suggestions = window.ColorHarmonyEngine.getContextualSuggestions(itemColor, wallColor, floorColor);
+
+    suggestions.forEach(s => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.title = `${s.label} (${s.hex})`;
+      btn.className = 'w-6 h-6 rounded-full border-2 border-slate-600 hover:scale-125 hover:border-violet-400 transition-all focus:outline-none focus:ring-2 focus:ring-violet-400 shrink-0 shadow-sm relative group';
+      btn.style.backgroundColor = s.hex;
+
+      btn.addEventListener('click', () => {
+        d.color = s.hex;
+        this.rebuildItemVisuals(this.selectedItem);
+        this.updateItemTransform(this.selectedItem);
+        this.syncInspectorValues();
+        this.pushHistory(`تناسق لوني: ${s.label}`);
+      });
+      container.appendChild(btn);
+    });
   }
 
   /**
@@ -2158,6 +2197,246 @@ class RoomStudioApp {
     document.getElementById('btn-screenshot')?.addEventListener('click', () => this.exportScreenshot());
     document.getElementById('btn-save-json')?.addEventListener('click', () => this.exportProjectJSON());
     document.getElementById('input-load-json')?.addEventListener('change', (e) => this.importProjectJSON(e));
+
+    // استوديو تناسق الألوان وقاعدة 60-30-10
+    document.getElementById('btn-open-harmony')?.addEventListener('click', () => {
+      this.openHarmonyStudioModal();
+    });
+
+    document.getElementById('btn-close-harmony')?.addEventListener('click', () => {
+      this.closeHarmonyStudioModal();
+    });
+
+    document.getElementById('btn-done-harmony')?.addEventListener('click', () => {
+      this.closeHarmonyStudioModal();
+    });
+
+    document.getElementById('harmony-modal')?.addEventListener('click', (e) => {
+      if (e.target.id === 'harmony-modal') {
+        this.closeHarmonyStudioModal();
+      }
+    });
+
+    const seedColorInput = document.getElementById('harmony-custom-seed');
+    if (seedColorInput) {
+      seedColorInput.addEventListener('input', (e) => {
+        this.renderGeneratedSchemes(e.target.value);
+      });
+    }
+  }
+
+  // ==================== استوديو تناسق وتناغم الألوان وقاعدة 60-30-10 ====================
+
+  openHarmonyStudioModal() {
+    const modal = document.getElementById('harmony-modal');
+    if (!modal) return;
+    modal.classList.remove('hidden');
+    this.updateHarmonyModalStats();
+    this.renderHarmonyCuratedPalettes();
+    const seed = document.getElementById('harmony-custom-seed')?.value || '#0f766e';
+    this.renderGeneratedSchemes(seed);
+  }
+
+  closeHarmonyStudioModal() {
+    const modal = document.getElementById('harmony-modal');
+    if (modal) modal.classList.add('hidden');
+  }
+
+  updateHarmonyModalStats() {
+    if (!window.ColorHarmonyEngine) return;
+    const r = this.activeRoom || this.rooms[0];
+    const analysis = window.ColorHarmonyEngine.analyzeRoomHarmony(r, this.items);
+
+    const roomLabel = document.getElementById('harmony-active-room-label');
+    if (roomLabel) roomLabel.textContent = `📍 الغرفة الحالية: ${r.name}`;
+
+    const scoreBadge = document.getElementById('harmony-score-badge');
+    if (scoreBadge) {
+      scoreBadge.textContent = `${analysis.score}% • ${analysis.rating}`;
+      scoreBadge.className = `px-3 py-1 rounded-full text-xs font-black border ${analysis.ratingBadgeClass}`;
+    }
+
+    const barDom = document.getElementById('harmony-bar-dominant');
+    const barSec = document.getElementById('harmony-bar-secondary');
+    const barAcc = document.getElementById('harmony-bar-accent');
+    if (barDom) { barDom.style.backgroundColor = analysis.dominant.hex; barDom.title = `سائد 60%: ${analysis.dominant.hex}`; }
+    if (barSec) { barSec.style.backgroundColor = analysis.secondary.hex; barSec.title = `ثانوي 30%: ${analysis.secondary.hex}`; }
+    if (barAcc) { barAcc.style.backgroundColor = analysis.accent.hex; barAcc.title = `تمييز 10%: ${analysis.accent.hex}`; }
+
+    const chipDom = document.getElementById('harmony-chip-dominant');
+    const chipSec = document.getElementById('harmony-chip-secondary');
+    const chipAcc = document.getElementById('harmony-chip-accent');
+    if (chipDom) chipDom.style.backgroundColor = analysis.dominant.hex;
+    if (chipSec) chipSec.style.backgroundColor = analysis.secondary.hex;
+    if (chipAcc) chipAcc.style.backgroundColor = analysis.accent.hex;
+
+    const tipEl = document.getElementById('harmony-tip-text');
+    if (tipEl && analysis.tips.length > 0) {
+      tipEl.textContent = analysis.tips.join(' ');
+    }
+  }
+
+  renderHarmonyCuratedPalettes() {
+    const grid = document.getElementById('harmony-palettes-grid');
+    if (!grid || !window.HARMONY_PALETTES) return;
+    grid.innerHTML = '';
+
+    window.HARMONY_PALETTES.forEach(p => {
+      const card = document.createElement('div');
+      card.className = 'bg-slate-950/80 p-3.5 rounded-2xl border border-slate-800 hover:border-violet-500/60 transition-all flex flex-col justify-between gap-2.5 group';
+
+      const circlesHtml = p.colors.map(c => `
+        <span class="w-6 h-6 rounded-full border border-white/20 shadow-sm shrink-0" style="background-color: ${c};" title="${c}"></span>
+      `).join('');
+
+      card.innerHTML = `
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between">
+            <h5 class="text-xs font-bold text-slate-100 group-hover:text-violet-300 transition-colors">${p.name}</h5>
+            <span class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">${p.category}</span>
+          </div>
+          <p class="text-[11px] text-slate-400 leading-relaxed">${p.description}</p>
+          <div class="flex items-center gap-1.5 pt-1">
+            ${circlesHtml}
+          </div>
+        </div>
+        <div class="flex items-center gap-2 pt-2 border-t border-slate-800/80">
+          <button type="button" class="btn-apply-room-palette flex-1 py-1.5 rounded-xl bg-violet-600/90 hover:bg-violet-600 text-white text-xs font-bold transition-all shadow-sm">
+            تطبيق على الغرفة
+          </button>
+          <button type="button" class="btn-apply-all-rooms-palette px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-bold transition-all" title="تطبيق هذا النمط على جميع غرف المنزل">
+            المنزل بالكامل
+          </button>
+        </div>
+      `;
+
+      card.querySelector('.btn-apply-room-palette').addEventListener('click', () => {
+        this.applyHarmonyPalette(p, 'active');
+      });
+
+      card.querySelector('.btn-apply-all-rooms-palette').addEventListener('click', () => {
+        this.applyHarmonyPalette(p, 'all');
+      });
+
+      grid.appendChild(card);
+    });
+  }
+
+  renderGeneratedSchemes(seedHex) {
+    const container = document.getElementById('harmony-generated-schemes');
+    if (!container || !window.ColorHarmonyEngine) return;
+    container.innerHTML = '';
+
+    const schemes = window.ColorHarmonyEngine.getHarmoniousSchemes(seedHex);
+    Object.keys(schemes).forEach(key => {
+      const s = schemes[key];
+      const card = document.createElement('div');
+      card.className = 'bg-slate-900/90 p-3 rounded-xl border border-slate-800 flex flex-col justify-between gap-2';
+
+      const chipsHtml = s.colors.map(c => `
+        <span class="w-5 h-5 rounded-md border border-white/20 shrink-0" style="background-color: ${c};" title="${c}"></span>
+      `).join('');
+
+      card.innerHTML = `
+        <div class="space-y-1">
+          <h6 class="text-[11px] font-bold text-slate-200">${s.title}</h6>
+          <div class="flex items-center gap-1 py-1">
+            ${chipsHtml}
+          </div>
+        </div>
+        <button type="button" class="w-full py-1 rounded-lg bg-slate-800 hover:bg-violet-600 text-slate-300 hover:text-white text-[10px] font-bold transition-colors">
+          تطبيق على الغرفة
+        </button>
+      `;
+
+      card.querySelector('button').addEventListener('click', () => {
+        const customPalette = {
+          id: `custom_${key}`,
+          name: s.title,
+          dominant: { wallId: 'warm_white', floorId: 'oak_parquet', hex: s.colors[2] },
+          secondary: {
+            furnitureColor: s.colors[0],
+            woodTone: s.colors[1],
+            rugPrimary: s.colors[0],
+            rugAccent: s.colors[3],
+            rugPattern: 'geometric'
+          },
+          accent: {
+            beddingColor: s.colors[3],
+            pillowColor: s.colors[1],
+            curtainColor: s.colors[2],
+            decorColor: s.colors[1]
+          }
+        };
+        this.applyHarmonyPalette(customPalette, 'active');
+      });
+
+      container.appendChild(card);
+    });
+  }
+
+  applyHarmonyPalette(palette, scope = 'active') {
+    const targetRooms = scope === 'all' ? this.rooms : [this.activeRoom];
+
+    targetRooms.forEach(room => {
+      if (palette.dominant.wallId) {
+        room.wallId = palette.dominant.wallId;
+        room.customWallColor = null;
+      } else if (palette.dominant.hex) {
+        room.customWallColor = palette.dominant.hex;
+      }
+
+      if (palette.dominant.floorId) {
+        room.floorId = palette.dominant.floorId;
+        room.customFloorColor = null;
+      } else if (palette.dominant.hex) {
+        room.customFloorColor = palette.dominant.hex;
+      }
+
+      // تطبيق الألوان على قطع أثاث الغرفة وفق قاعدة 60-30-10
+      const halfW = room.width / 2;
+      const halfD = room.depth / 2;
+      this.items.forEach(g => {
+        const d = g.userData.itemData;
+        const inThisRoom = (
+          d.x >= room.offsetX - halfW - 20 &&
+          d.x <= room.offsetX + halfW + 20 &&
+          d.z >= room.offsetZ - halfD - 20 &&
+          d.z <= room.offsetZ + halfD + 20
+        );
+        if (!inThisRoom) return;
+
+        if (this.isBed(d.catalogId)) {
+          d.color = palette.secondary.woodTone || palette.secondary.furnitureColor;
+          d.beddingColor = palette.accent.beddingColor || '#ffffff';
+          d.pillowColor = palette.accent.pillowColor || '#b08968';
+        } else if (this.isRug(d.catalogId)) {
+          d.color = palette.secondary.rugPrimary;
+          d.secondaryColor = palette.secondary.rugAccent;
+          if (palette.secondary.rugPattern) {
+            d.rugPattern = palette.secondary.rugPattern;
+          }
+        } else if (this.isCurtain(d.catalogId)) {
+          d.color = palette.accent.curtainColor || palette.secondary.furnitureColor;
+        } else {
+          d.color = palette.secondary.furnitureColor;
+          if (d.secondaryColor && palette.secondary.woodTone) {
+            d.secondaryColor = palette.secondary.woodTone;
+          }
+        }
+        this.rebuildItemVisuals(g);
+        this.updateItemTransform(g);
+      });
+    });
+
+    this.buildAllRooms();
+    this.syncActiveRoomInputsUI();
+    if (this.selectedItem) {
+      this.syncInspectorValues();
+    }
+    this.updateRoomStatsUI();
+    this.updateHarmonyModalStats();
+    this.pushHistory(`تناسق لوني: ${palette.name}`);
   }
 
   renderCatalogList(category) {

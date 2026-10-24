@@ -107,6 +107,12 @@
         <span id="all-doors-btn-label" class="hidden md:inline">فتح الأبواب والنوافذ</span>
       </button>
 
+      <!-- زر استوديو تناسق الألوان وقاعدة 60-30-10 -->
+      <button id="btn-open-harmony" type="button" class="px-2.5 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white transition-all flex items-center gap-1 shadow-md shadow-violet-950/30" title="استوديو تناسق الألوان الذكي وقاعدة 60-30-10">
+        <span>✨</span>
+        <span class="hidden md:inline">تناسق الألوان</span>
+      </button>
+
       <!-- زر الإضاءة -->
       <button id="btn-toggle-light" type="button" class="px-2.5 py-1.5 rounded-xl text-xs font-bold bg-slate-800 border border-slate-700 text-slate-200 hover:border-amber-400 transition-all">
         <span id="light-mode-label">☀️ نهاري</span>
@@ -668,6 +674,18 @@
               <input id="item-secondary-color" type="color" value="#2b2019" class="w-6 h-6 rounded cursor-pointer border-0 bg-transparent p-0" title="اختر لون الهيكل الثانوي أو الأرجل">
             </div>
           </div>
+
+          <!-- 4.1. ألوان مقترحة متناسقة علمياً مع القطعة والغرفة -->
+          <div class="pt-2 border-t border-slate-800/80 space-y-1.5">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-bold text-violet-300 flex items-center gap-1">
+                <span>✨</span>
+                <span>تناسق ذكي مقترح للقطعة:</span>
+              </span>
+              <span class="text-[9px] text-slate-400">تكميلي ومتجاور</span>
+            </div>
+            <div id="item-harmonious-palette" class="flex flex-wrap gap-1.5 p-1.5 bg-slate-900/60 rounded-xl border border-violet-900/30"></div>
+          </div>
         </div>
 
         <!-- 5. أزرار التكرار والحذف -->
@@ -684,8 +702,130 @@
 
   </div>
 
+  <!-- ==================== نافذة استوديو تناسق وتناغم الألوان وقاعدة 60-30-10 (Color Harmony Studio Modal) ==================== -->
+  <div id="harmony-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto">
+    <div class="relative w-full max-w-4xl bg-slate-900 border border-violet-500/40 rounded-3xl shadow-2xl shadow-violet-950/50 p-5 sm:p-6 space-y-5 text-slate-100 max-h-[92vh] overflow-y-auto">
+      
+      <!-- رأس النافذة -->
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-violet-600 to-fuchsia-600 flex items-center justify-center text-xl shadow-lg shadow-violet-600/30">
+            ✨
+          </div>
+          <div>
+            <h3 class="text-base font-extrabold text-white flex items-center gap-2">
+              <span>استوديو تناسق وتناغم الألوان الداخلي</span>
+              <span class="text-xs px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300 border border-violet-500/30 font-medium">قاعدة 60-30-10</span>
+            </h3>
+            <p class="text-xs text-slate-400">تحليل التناغم اللوني الهندسي وتطبيق أرقى باليتات الديكور العالمية بنقرة واحدة</p>
+          </div>
+        </div>
+        <button id="btn-close-harmony" type="button" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center text-lg transition-colors">
+          ✕
+        </button>
+      </div>
+
+      <!-- 1. تحليل ومؤشر التناسق اللوني للغرفة الحالية (Live Harmony Score & 60-30-10 Bar) -->
+      <div class="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center gap-2">
+            <span class="text-sm font-bold text-slate-200">مؤشر تناسق الغرفة الحالية:</span>
+            <span id="harmony-score-badge" class="px-3 py-1 rounded-full text-xs font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+              92% • تناسق لوني ممتاز
+            </span>
+          </div>
+          <span id="harmony-active-room-label" class="text-xs text-sky-400 font-bold">غرفة 1</span>
+        </div>
+
+        <!-- شريط التوزيع الثلاثي لقاعدة 60-30-10 -->
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between text-xs text-slate-400">
+            <span>توزيع الألوان الديكوري (60% سائد • 30% ثانوي • 10% تمييز):</span>
+            <span class="font-mono text-[11px] text-slate-300">60% : 30% : 10%</span>
+          </div>
+          <div class="h-4 w-full rounded-full overflow-hidden flex shadow-inner bg-slate-900 border border-slate-800">
+            <div id="harmony-bar-dominant" style="width: 60%; background-color: #f5ebe0;" class="h-full transition-all" title="اللون السائد 60%"></div>
+            <div id="harmony-bar-secondary" style="width: 30%; background-color: #84a98c;" class="h-full transition-all" title="اللون الثانوي 30%"></div>
+            <div id="harmony-bar-accent" style="width: 10%; background-color: #d97706;" class="h-full transition-all" title="لون التمييز 10%"></div>
+          </div>
+        </div>
+
+        <!-- كروت تفصيل الألوان الثلاثة -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 text-xs">
+          <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 flex items-center gap-2.5">
+            <div id="harmony-chip-dominant" class="w-7 h-7 rounded-lg border border-white/20 shrink-0 shadow-sm" style="background-color: #f5ebe0;"></div>
+            <div>
+              <div class="font-bold text-slate-200">اللون السائد (60%)</div>
+              <div class="text-[10px] text-slate-400">الجدران والأسقف</div>
+            </div>
+          </div>
+          <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 flex items-center gap-2.5">
+            <div id="harmony-chip-secondary" class="w-7 h-7 rounded-lg border border-white/20 shrink-0 shadow-sm" style="background-color: #84a98c;"></div>
+            <div>
+              <div class="font-bold text-slate-200">اللون الثانوي (30%)</div>
+              <div class="text-[10px] text-slate-400">الأثاث والموكيت والسجاد</div>
+            </div>
+          </div>
+          <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 flex items-center gap-2.5">
+            <div id="harmony-chip-accent" class="w-7 h-7 rounded-lg border border-white/20 shrink-0 shadow-sm" style="background-color: #d97706;"></div>
+            <div>
+              <div class="font-bold text-slate-200">لون التمييز (10%)</div>
+              <div class="text-[10px] text-slate-400">المفارش، الوسائد، الإكسسوار</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- نصيحة الديكور الذكية -->
+        <div id="harmony-tips-container" class="bg-violet-950/30 p-2.5 rounded-xl border border-violet-800/40 text-xs text-violet-200 flex items-start gap-2">
+          <span class="text-base shrink-0">💡</span>
+          <span id="harmony-tip-text">ألوان الغرفة متناسقة جداً وتتبع قاعدة الديكور العالمية بتناغم وراحة بصرية.</span>
+        </div>
+      </div>
+
+      <!-- 2. باليتات التناسق العالمية الجاهزة (Curated Designer Moods) -->
+      <div class="space-y-2.5">
+        <div class="flex items-center justify-between">
+          <h4 class="text-xs font-extrabold text-violet-400 flex items-center gap-1.5">
+            <span>🎨</span>
+            <span>باليتات ديكور عالمية متناسقة جاهزة للتطبيق الفوري:</span>
+          </h4>
+          <span class="text-[11px] text-slate-400">انقر على أي باليتة لتطبيقها بنقرة واحدة</span>
+        </div>
+
+        <div id="harmony-palettes-grid" class="grid grid-cols-1 md:grid-cols-2 gap-2.5 max-h-72 overflow-y-auto p-1">
+          <!-- يتم ملؤها برمجياً من window.HARMONY_PALETTES -->
+        </div>
+      </div>
+
+      <!-- 3. المولد اللوني الحر للتناسق (Custom Color Harmony Generator) -->
+      <div class="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-extrabold text-slate-200">🧪 توليد باليتة متناسقة من لونك المفضل:</span>
+            <input id="harmony-custom-seed" type="color" value="#0f766e" class="w-7 h-7 rounded cursor-pointer border-0 bg-transparent p-0" title="اختر اللون الأساسي لتوليد تناسق رياضي كامل">
+          </div>
+          <span class="text-[10px] text-slate-400">حسابات نظرية الألوان (تكميلي • متجاور • ثلاثي • أحادي)</span>
+        </div>
+
+        <div id="harmony-generated-schemes" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+          <!-- يتم توليدها فورياً بناءً على اللون المختار -->
+        </div>
+      </div>
+
+      <!-- أزرار الإجراءات السريعة -->
+      <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-800 text-xs">
+        <span class="text-slate-400">يطبق التناسق على دهان الجدران، الموكيت، الأثاث، والمفارش والسجاد فوراً.</span>
+        <button id="btn-done-harmony" type="button" class="px-5 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold transition-all shadow-md">
+          إغلاق والعودة للتصميم ✓
+        </button>
+      </div>
+
+    </div>
+  </div>
+
   <!-- ملفات المحرك البرمجية -->
   <script src="./js/catalog.js"></script>
+  <script src="./js/color-harmony.js"></script>
   <script src="./js/procedural-builder.js"></script>
   <script src="./js/app.js"></script>
 </body>
