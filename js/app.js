@@ -560,9 +560,13 @@ class RoomStudioApp {
     this.pushHistory('حذف غرفة');
   }
 
-  // ==================== فحص ما إذا كان العنصر باباً أو نافذة ====================
+  // ==================== فحص ما إذا كان العنصر باباً أو نافذة أو ستارة ====================
   isDoorOrWindow(catalogId) {
     return ['door_wood', 'door_double', 'door_sliding_glass', 'window_glass'].includes(catalogId);
+  }
+
+  isCurtain(catalogId) {
+    return ['curtain_drape', 'curtain_sheer_double', 'curtain_roller_blinds', 'curtain_roman'].includes(catalogId);
   }
 
   // ==================== إضافة وتحديث قطع الأثاث ====================
@@ -572,6 +576,7 @@ class RoomStudioApp {
 
     const targetRoom = this.activeRoom;
     const isOpeningItem = this.isDoorOrWindow(catItem.id);
+    const isCurtainItem = this.isCurtain(catItem.id);
     const defaultOpenType = (catItem.id === 'door_sliding_glass' || catItem.id === 'window_glass') ? 'sliding' : 'hinged';
     const defaultHingeSide = catItem.id === 'door_double' ? 'both' : 'right';
 
@@ -593,6 +598,9 @@ class RoomStudioApp {
         openDirection: customProps.openDirection || 'inward',
         hingeSide: customProps.hingeSide || defaultHingeSide,
         openRatio: typeof customProps.openRatio === 'number' ? customProps.openRatio : 65
+      } : {}),
+      ...(isCurtainItem ? {
+        curtainOpenRatio: typeof customProps.curtainOpenRatio === 'number' ? customProps.curtainOpenRatio : 25
       } : {})
     };
 
@@ -982,6 +990,101 @@ class RoomStudioApp {
     if (rotLabel) rotLabel.textContent = `${Math.round(d.rotation)}°`;
 
     this.syncDoorWindowInspectorUI();
+    this.syncCurtainInspectorUI();
+  }
+
+  /**
+   * مزامنة لوحة التحكم الخاصة بالستائر ومطابقتها لأحجام النوافذ
+   */
+  syncCurtainInspectorUI() {
+    const panel = document.getElementById('curtain-controls');
+    if (!panel) return;
+
+    if (!this.selectedItem) {
+      panel.classList.add('hidden');
+      return;
+    }
+
+    const d = this.selectedItem.userData.itemData;
+    if (!this.isCurtain(d.catalogId)) {
+      panel.classList.add('hidden');
+      return;
+    }
+
+    panel.classList.remove('hidden');
+
+    const ratio = typeof d.curtainOpenRatio === 'number' ? d.curtainOpenRatio : 25;
+    const slider = document.getElementById('item-curtain-open');
+    if (slider) slider.value = Math.round(ratio);
+
+    const badge = document.getElementById('curtain-open-badge');
+    if (badge) {
+      badge.textContent = ratio <= 0 ? 'مسدلة 0%' : `مفتوحة ${Math.round(ratio)}%`;
+    }
+  }
+
+  /**
+   * مطابقة حجم وموقع الستارة المحددة تلقائياً على أقرب نافذة في الغرفة
+   */
+  fitSelectedCurtainToNearestWindow() {
+    if (!this.selectedItem) return;
+    const cData = this.selectedItem.userData.itemData;
+    if (!this.isCurtain(cData.catalogId)) return;
+
+    const windows = this.items.filter(g => {
+      const id = g.userData.itemData.catalogId;
+      return id === 'window_glass' || id === 'door_sliding_glass';
+    });
+
+    if (windows.length === 0) {
+      alert('لا توجد نافذة في الغرفة حالياً؛ يمكنك إضافة نافذة من الكتالوج أولاً أو ضبط مقاس الستارة مباشرة.');
+      return;
+    }
+
+    // إيجاد أقرب نافذة إلى موقع الستارة الحالي
+    let nearestWin = windows[0];
+    let minDist = Infinity;
+    windows.forEach(wGroup => {
+      const wd = wGroup.userData.itemData;
+      const dist = Math.hypot(wd.x - cData.x, wd.z - cData.z);
+      if (dist < minDist) {
+        minDist = dist;
+        nearestWin = wGroup;
+      }
+    });
+
+    const wd = nearestWin.userData.itemData;
+    const isLongDrape = cData.catalogId === 'curtain_drape' || cData.catalogId === 'curtain_sheer_double';
+
+    // جعل عرض الستارة أعرض من النافذة بـ 24 سم لتغطية الحواف بشكل جمالي
+    cData.width = wd.width + (isLongDrape ? 26 : 10);
+    cData.rotation = wd.rotation;
+
+    if (isLongDrape) {
+      const topY = (wd.elevation || 90) + wd.height + 12;
+      cData.elevation = 2;
+      cData.height = Math.max(180, topY - 2);
+    } else {
+      cData.elevation = Math.max(0, (wd.elevation || 90) - 5);
+      cData.height = wd.height + 15;
+    }
+
+    // إزاحة الستارة بضعة سنتيمترات داخل الغرفة أمام النافذة مباشرة
+    const room = this.findRoomContainingPoint(wd.x, wd.z) || this.activeRoom;
+    const dirToCenterX = room.offsetX - wd.x;
+    const dirToCenterZ = room.offsetZ - wd.z;
+    const rad = THREE.MathUtils.degToRad(wd.rotation);
+    const nx = Math.sin(rad);
+    const nz = Math.cos(rad);
+    const sign = (nx * dirToCenterX + nz * dirToCenterZ) >= 0 ? 1 : -1;
+
+    cData.x = Math.round(wd.x + nx * sign * 12);
+    cData.z = Math.round(wd.z + nz * sign * 12);
+
+    this.rebuildItemVisuals(this.selectedItem);
+    this.updateItemTransform(this.selectedItem);
+    this.syncInspectorValues();
+    this.pushHistory('مطابقة الستارة مع النافذة');
   }
 
   /**
@@ -1634,6 +1737,59 @@ class RoomStudioApp {
       });
     });
 
+    // عناصر التحكم في الستائر وأحجامها ومطابقتها للنوافذ
+    const applySelectedCurtainChange = (mutatorFn, historyLabel) => {
+      if (!this.selectedItem) return;
+      const d = this.selectedItem.userData.itemData;
+      if (!this.isCurtain(d.catalogId)) return;
+      mutatorFn(d);
+      this.rebuildItemVisuals(this.selectedItem);
+      this.updateItemTransform(this.selectedItem);
+      this.syncInspectorValues();
+      if (historyLabel) {
+        this.pushHistory(historyLabel);
+      }
+    };
+
+    document.getElementById('btn-fit-curtain-window')?.addEventListener('click', () => {
+      this.fitSelectedCurtainToNearestWindow();
+    });
+
+    const curtainOpenSlider = document.getElementById('item-curtain-open');
+    if (curtainOpenSlider) {
+      curtainOpenSlider.addEventListener('input', () => {
+        applySelectedCurtainChange(d => {
+          d.curtainOpenRatio = Number(curtainOpenSlider.value);
+        }, '');
+      });
+      curtainOpenSlider.addEventListener('change', () => {
+        this.pushHistory('تعديل نسبة فتح الستارة');
+      });
+    }
+
+    document.getElementById('btn-curtain-closed')?.addEventListener('click', () => {
+      applySelectedCurtainChange(d => { d.curtainOpenRatio = 0; }, 'إسدال الستارة بالكامل');
+    });
+    document.getElementById('btn-curtain-half')?.addEventListener('click', () => {
+      applySelectedCurtainChange(d => { d.curtainOpenRatio = 50; }, 'فتح الستارة للنصف');
+    });
+    document.getElementById('btn-curtain-open')?.addEventListener('click', () => {
+      applySelectedCurtainChange(d => { d.curtainOpenRatio = 85; }, 'فتح الستارة بالكامل');
+    });
+
+    document.querySelectorAll('.curtain-preset-size-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const cw = Number(btn.dataset.cw) || 160;
+        const ch = Number(btn.dataset.ch) || 160;
+        const ce = Number(btn.dataset.ce) || 0;
+        applySelectedCurtainChange(d => {
+          d.width = cw;
+          d.height = ch;
+          d.elevation = ce;
+        }, `تغيير مقاس الستارة (${cw}×${ch} سم)`);
+      });
+    });
+
     document.getElementById('btn-toggle-light')?.addEventListener('click', () => {
       const next = this.settings.lightingMode === 'day' ? 'night' : 'day';
       this.setLightingMode(next);
@@ -1731,7 +1887,8 @@ class RoomStudioApp {
       openType: d.openType,
       openDirection: d.openDirection,
       hingeSide: d.hingeSide,
-      openRatio: d.openRatio
+      openRatio: d.openRatio,
+      curtainOpenRatio: d.curtainOpenRatio
     }, true);
   }
 

@@ -227,9 +227,10 @@
           <span class="text-[10px] text-slate-400 font-normal">يُضاف للغرفة النشطة</span>
         </h2>
 
-        <!-- فلاتر التصنيف الموسعة (6 أقسام) -->
-        <div class="grid grid-cols-6 gap-1 mb-2.5">
+        <!-- فلاتر التصنيف الموسعة (7 أقسام شاملة الستائر وإكسسوارات الزينة) -->
+        <div class="grid grid-cols-4 sm:grid-cols-7 gap-1 mb-2.5">
           <button type="button" data-cat="all" class="cat-filter-btn px-1 py-1.5 rounded-lg text-[10px] font-bold bg-sky-600 text-white transition-colors">الكل</button>
+          <button type="button" data-cat="decor" class="cat-filter-btn px-1 py-1.5 rounded-lg text-[10px] font-bold bg-slate-800 text-emerald-300 hover:text-white transition-colors">🌿 زينة/ستائر</button>
           <button type="button" data-cat="living" class="cat-filter-btn px-1 py-1.5 rounded-lg text-[10px] font-bold bg-slate-800 text-slate-300 hover:text-white transition-colors">معيشة</button>
           <button type="button" data-cat="bedroom" class="cat-filter-btn px-1 py-1.5 rounded-lg text-[10px] font-bold bg-slate-800 text-slate-300 hover:text-white transition-colors">نوم</button>
           <button type="button" data-cat="kitchen" class="cat-filter-btn px-1 py-1.5 rounded-lg text-[10px] font-bold bg-slate-800 text-slate-300 hover:text-white transition-colors">مطبخ/حمام</button>
@@ -418,6 +419,54 @@
             <div id="door-collision-alert" class="pt-1 border-t border-slate-800/80 text-[11px] font-bold text-emerald-400 flex items-center gap-1">
               <span>✅</span>
               <span>مسار الفتح خالٍ ولا يصطدم بأي أثاث</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 1.6. إعدادات الستائر ومطابقتها لأحجام النوافذ (تظهر تلقائياً عند تحديد أي ستارة) -->
+        <div id="curtain-controls" class="hidden bg-slate-950/90 p-3 rounded-2xl border border-emerald-500/40 space-y-3 shadow-lg shadow-emerald-950/20">
+          <div class="flex items-center justify-between">
+            <h4 class="text-xs font-extrabold text-emerald-400 flex items-center gap-1.5">
+              <span>🎐</span>
+              <span>التحكم بالستارة ومطابقة النافذة</span>
+            </h4>
+            <span id="curtain-open-badge" class="text-[11px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+              مفتوحة 25%
+            </span>
+          </div>
+
+          <!-- زر مطابقة مقاس الستارة على أقرب نافذة في الغرفة بضغطة واحدة -->
+          <button id="btn-fit-curtain-window" type="button" class="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-extrabold shadow-md transition-all flex items-center justify-center gap-1.5">
+            <span>🪟</span>
+            <span>تركيب ومطابقة مقاس أقرب نافذة تلقائياً</span>
+          </button>
+
+          <!-- شريط فتح وإزاحة قماش الستارة -->
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between text-[11px] text-slate-300">
+              <label for="item-curtain-open">نسبة فتح وإزاحة القماش:</label>
+              <div class="flex gap-1">
+                <button id="btn-curtain-closed" type="button" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] font-bold text-slate-300">إسدال 0%</button>
+                <button id="btn-curtain-half" type="button" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] font-bold text-emerald-300">نصف 50%</button>
+                <button id="btn-curtain-open" type="button" class="px-2 py-0.5 rounded bg-emerald-600 hover:bg-emerald-500 text-[10px] font-bold text-white">فتح 85%</button>
+              </div>
+            </div>
+            <input id="item-curtain-open" type="range" min="0" max="100" step="5" value="25" class="w-full accent-emerald-500 cursor-pointer">
+          </div>
+
+          <!-- مقاسات جاهزة سريعة للنوافذ -->
+          <div>
+            <span class="block text-[11px] text-slate-300 mb-1.5 font-semibold">أحجام ستائر قياسية سريعة:</span>
+            <div class="grid grid-cols-3 gap-1.5">
+              <button type="button" data-cw="130" data-ch="155" data-ce="80" class="curtain-preset-size-btn py-1.5 px-1 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-emerald-500 text-[10px] font-bold text-slate-200 transition-all">
+                نافذة صغيرة<br><span class="text-emerald-400">130×155سم</span>
+              </button>
+              <button type="button" data-cw="175" data-ch="165" data-ce="75" class="curtain-preset-size-btn py-1.5 px-1 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-emerald-500 text-[10px] font-bold text-slate-200 transition-all">
+                نافذة عريضة<br><span class="text-emerald-400">175×165سم</span>
+              </button>
+              <button type="button" data-cw="220" data-ch="255" data-ce="10" class="curtain-preset-size-btn py-1.5 px-1 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-emerald-500 text-[10px] font-bold text-slate-200 transition-all">
+                طويلة للأرض<br><span class="text-emerald-400">220×255سم</span>
+              </button>
             </div>
           </div>
         </div>

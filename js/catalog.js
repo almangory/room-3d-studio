@@ -220,7 +220,7 @@ window.FURNITURE_CATALOG = [
     color: '#a97142', secondaryColor: '#1e3a8a', icon: '📚'
   },
 
-  // ================= المعمارية والأبواب والديكور (Architecture & Decor) =================
+  // ================= المعمارية والأبواب والنوافذ (Architecture) =================
   {
     id: 'door_wood', name: 'باب غرفة خشبي مفرد', category: 'arch',
     width: 95, depth: 16, height: 215, elevation: 0,
@@ -247,11 +247,6 @@ window.FURNITURE_CATALOG = [
     color: '#f8fafc', secondaryColor: '#38bdf8', icon: '🪟'
   },
   {
-    id: 'curtain_drape', name: 'ستارة قماشية طويلة', category: 'arch',
-    width: 170, depth: 15, height: 245, elevation: 0,
-    color: '#1e3a8a', secondaryColor: '#d97706', icon: '🎐'
-  },
-  {
     id: 'partition_screen', name: 'بارتشن / قاطع خشبي مفرغ', category: 'arch',
     width: 140, depth: 18, height: 210, elevation: 0,
     color: '#a97142', secondaryColor: '#5c3a21', icon: '🚧'
@@ -271,30 +266,138 @@ window.FURNITURE_CATALOG = [
     width: 105, depth: 26, height: 32, elevation: 225,
     color: '#f8fafc', secondaryColor: '#1e293b', icon: '❄️'
   },
+
+  // ================= الستائر وإكسسوارات النوافذ (Curtains & Window Treatments) =================
   {
-    id: 'chandelier', name: 'نجفة سقف كريستال مودرن', category: 'arch',
-    width: 75, depth: 75, height: 55, elevation: 230,
-    color: '#f59e0b', secondaryColor: '#fef3c7', icon: '✨'
+    id: 'curtain_drape', name: 'ستارة قماشية ويفي طويلة للنوافذ', category: 'decor',
+    width: 170, depth: 18, height: 245, elevation: 15,
+    color: '#1e3a8a', secondaryColor: '#d97706', icon: '🎐'
   },
   {
-    id: 'wall_art', name: 'لوحة جدارية فنية محتشمة', category: 'arch',
+    id: 'curtain_sheer_double', name: 'ستارة فندقية مزدوجة (شيفون + بلاك أوت)', category: 'decor',
+    width: 200, depth: 22, height: 250, elevation: 15,
+    color: '#334155', secondaryColor: '#f8fafc', icon: '🪟'
+  },
+  {
+    id: 'curtain_roller_blinds', name: 'ستارة رول شرائح عصرية (Zebra Blinds)', category: 'decor',
+    width: 155, depth: 12, height: 145, elevation: 85,
+    color: '#e2e8f0', secondaryColor: '#475569', icon: '📜'
+  },
+  {
+    id: 'curtain_roman', name: 'ستارة رومانية مطوية أنيقة للنافذة', category: 'decor',
+    width: 150, depth: 14, height: 150, elevation: 85,
+    color: '#d6ccc2', secondaryColor: '#a97142', icon: '🎗️'
+  },
+
+  // ================= أشجار ونباتات الزينة الطبيعية (Ornamental Trees & Plants) =================
+  {
+    id: 'plant_pot', name: 'شجرة فيكس / مونستيرا كبيرة بأصيص', category: 'decor',
+    width: 60, depth: 60, height: 145, elevation: 0,
+    color: '#065f46', secondaryColor: '#f8fafc', icon: '🪴'
+  },
+  {
+    id: 'plant_palm_tall', name: 'شجرة نخيل أريكا استوائية طويلة للركن', category: 'decor',
+    width: 75, depth: 75, height: 185, elevation: 0,
+    color: '#15803d', secondaryColor: '#d6ccc2', icon: '🌴'
+  },
+  {
+    id: 'plant_olive_tree', name: 'شجرة زيتون ديكورية بأصيص حجري', category: 'decor',
+    width: 65, depth: 65, height: 165, elevation: 0,
+    color: '#3f6212', secondaryColor: '#e2e8f0', icon: '🌳'
+  },
+  {
+    id: 'plant_hanging_ivy', name: 'نبتة زينة متسلقة متدلية للحائط', category: 'decor',
+    width: 45, depth: 30, height: 85, elevation: 140,
+    color: '#166534', secondaryColor: '#a97142', icon: '🌿'
+  },
+  {
+    id: 'flower_vase_table', name: 'فازة ورد طبيعي فاخرة للطاولات', category: 'decor',
+    width: 32, depth: 32, height: 52, elevation: 45,
+    color: '#be185d', secondaryColor: '#f8fafc', icon: '💐'
+  },
+  {
+    id: 'plant_succulent_set', name: 'طقم صباريات ونباتات طاولة صغيرة', category: 'decor',
+    width: 42, depth: 22, height: 26, elevation: 55,
+    color: '#0f766e', secondaryColor: '#f5ebe0', icon: '🌵'
+  },
+
+  // ================= الأباجورات والنجف ووحدات الإضاءة (Lamps & Lighting) =================
+  {
+    id: 'floor_lamp', name: 'أباجورة أرضية كلاسيكية طويلة', category: 'decor',
+    width: 45, depth: 45, height: 165, elevation: 0,
+    color: '#fef3c7', secondaryColor: '#d97706', icon: '💡'
+  },
+  {
+    id: 'floor_lamp_arc', name: 'أباجورة أرضية مقوسة مودرن (Arc Lamp)', category: 'decor',
+    width: 85, depth: 45, height: 195, elevation: 0,
+    color: '#fef3c7', secondaryColor: '#d97706', icon: '🏮'
+  },
+  {
+    id: 'table_lamp_luxury', name: 'أباجورة طاولة وكومودينو فندقية', category: 'decor',
+    width: 34, depth: 34, height: 55, elevation: 55,
+    color: '#fef3c7', secondaryColor: '#d97706', icon: '🛋️'
+  },
+  {
+    id: 'wall_sconce_light', name: 'أبليك جداري مضيء مزدوج', category: 'decor',
+    width: 24, depth: 16, height: 48, elevation: 155,
+    color: '#fef3c7', secondaryColor: '#d97706', icon: '🕯️'
+  },
+  {
+    id: 'chandelier', name: 'نجفة سقف كريستال مودرن', category: 'decor',
+    width: 80, depth: 80, height: 60, elevation: 230,
+    color: '#f59e0b', secondaryColor: '#fef3c7', icon: '✨'
+  },
+
+  // ================= أدوات الزينة وإكسسوارات الغرف (Room Accessories & Decor) =================
+  {
+    id: 'mirror_standing_arch', name: 'مرآة أرضية طويلة مقوسة بإطار ذهبي', category: 'decor',
+    width: 75, depth: 12, height: 185, elevation: 0,
+    color: '#d97706', secondaryColor: '#7dd3fc', icon: '🪞'
+  },
+  {
+    id: 'wall_clock_modern', name: 'ساعة حائط ديكورية كبيرة عقارب ذهبية', category: 'decor',
+    width: 65, depth: 8, height: 65, elevation: 170,
+    color: '#1e293b', secondaryColor: '#d97706', icon: '🕰️'
+  },
+  {
+    id: 'wall_art', name: 'لوحة جدارية فنية محتشمة', category: 'decor',
     width: 110, depth: 6, height: 75, elevation: 135,
     color: '#0f766e', secondaryColor: '#d97706', icon: '🖼️'
   },
   {
-    id: 'rug_large', name: 'سجادة أرضية منقوشة', category: 'arch',
+    id: 'wall_art_triptych', name: 'طقم 3 لوحات جدارية متناسقة مودرن', category: 'decor',
+    width: 155, depth: 6, height: 75, elevation: 135,
+    color: '#1e3a8a', secondaryColor: '#d97706', icon: '🎨'
+  },
+  {
+    id: 'floating_shelf_decor', name: 'رف حائط عائم مع تحف وكتب ديكورية', category: 'decor',
+    width: 110, depth: 24, height: 35, elevation: 140,
+    color: '#a97142', secondaryColor: '#0f766e', icon: '🏺'
+  },
+  {
+    id: 'decor_tray_candles', name: 'صينية عطور وشموع ومبخرة للطاولة', category: 'decor',
+    width: 42, depth: 28, height: 22, elevation: 45,
+    color: '#d97706', secondaryColor: '#f8fafc', icon: '🕯️'
+  },
+  {
+    id: 'coat_stand_wood', name: 'شماعة ملابس وحقائب خشبية قائمة', category: 'decor',
+    width: 45, depth: 45, height: 178, elevation: 0,
+    color: '#5c3a21', secondaryColor: '#d97706', icon: '🧥'
+  },
+  {
+    id: 'laundry_basket_woven', name: 'سلة تنظيم وغسيل خوص منسوجة بغطاء', category: 'decor',
+    width: 46, depth: 46, height: 62, elevation: 0,
+    color: '#d6ccc2', secondaryColor: '#a97142', icon: '🧺'
+  },
+  {
+    id: 'rug_large', name: 'سجادة أرضية مستطيلة منقوشة', category: 'decor',
     width: 240, depth: 170, height: 2, elevation: 0,
     color: '#b45309', secondaryColor: '#f5ebe0', icon: '🧶'
   },
   {
-    id: 'floor_lamp', name: 'أباجورة أرضية طويلة', category: 'arch',
-    width: 45, depth: 45, height: 165, elevation: 0,
-    color: '#f5ebe0', secondaryColor: '#d97706', icon: '💡'
-  },
-  {
-    id: 'plant_pot', name: 'نبتة زينة طبيعية كبيرة', category: 'arch',
-    width: 55, depth: 55, height: 135, elevation: 0,
-    color: '#065f46', secondaryColor: '#f8fafc', icon: '🪴'
+    id: 'rug_round_boho', name: 'سجادة دائرية بوهيمية ناعمة للغرف', category: 'decor',
+    width: 160, depth: 160, height: 2, elevation: 0,
+    color: '#d6ccc2', secondaryColor: '#b45309', icon: '⭕'
   }
 ];
 

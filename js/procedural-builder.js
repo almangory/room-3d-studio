@@ -504,16 +504,72 @@ window.ProceduralBuilder = {
         break;
       }
 
+      case 'rug_round_boho': {
+        const radius = Math.min(W, D) / 2;
+        addCyl(radius, radius, 0.014, 0, 0.007, 0, mainMat);
+        addCyl(radius * 0.76, radius * 0.76, 0.018, 0, 0.010, 0, secMat);
+        addCyl(radius * 0.45, radius * 0.45, 0.021, 0, 0.012, 0, mainMat);
+        break;
+      }
+
       case 'floor_lamp': {
         addCyl(W * 0.35, W * 0.35, 0.03, 0, 0.015, 0, metalMat);
         addCyl(0.02, 0.02, H * 0.78, 0, H * 0.39, 0, metalMat);
         const shadeMat = new THREE.MeshStandardMaterial({
           color: itemData.color || '#fef3c7',
           emissive: '#f59e0b',
-          emissiveIntensity: 0.4,
+          emissiveIntensity: 0.45,
           roughness: 0.5
         });
         addCyl(W * 0.35, W * 0.5, H * 0.22, 0, H * 0.88, 0, shadeMat);
+        break;
+      }
+
+      case 'floor_lamp_arc': {
+        // قاعدة رخامية ثقيلة + عمود مقوس يمتد للأمام + قبة مضيئة
+        addCyl(0.18, 0.2, 0.06, -W * 0.32, 0.03, 0, secMat);
+        addCyl(0.018, 0.022, H * 0.82, -W * 0.32, H * 0.42, 0, metalMat);
+        const topArm = addBox(W * 0.68, 0.025, 0.025, 0.02, H * 0.88, 0, metalMat);
+        topArm.rotation.z = -0.15;
+        const glowShade = new THREE.MeshStandardMaterial({
+          color: itemData.color || '#fef3c7',
+          emissive: '#f59e0b',
+          emissiveIntensity: 0.65,
+          roughness: 0.3
+        });
+        const dome = new THREE.Mesh(new THREE.SphereGeometry(0.18, 20, 14, 0, Math.PI * 2, 0, Math.PI * 0.65), glowShade);
+        dome.position.set(W * 0.32, H * 0.78, 0);
+        dome.castShadow = true;
+        dome.userData.isHitTarget = true;
+        group.add(dome);
+        break;
+      }
+
+      case 'table_lamp_luxury': {
+        // أباجورة طاولة وكومودينو فندقية بقاعدة سيراميك/ذهب وشابوه مضيء
+        addCyl(W * 0.28, W * 0.34, 0.04, 0, 0.02, 0, metalMat);
+        addCyl(W * 0.22, W * 0.28, H * 0.42, 0, H * 0.23, 0, secMat);
+        const shadeMat = new THREE.MeshStandardMaterial({
+          color: itemData.color || '#fef3c7',
+          emissive: '#f59e0b',
+          emissiveIntensity: 0.55,
+          roughness: 0.45
+        });
+        addCyl(W * 0.36, W * 0.48, H * 0.44, 0, H * 0.72, 0, shadeMat);
+        break;
+      }
+
+      case 'wall_sconce_light': {
+        // أبليك جداري مزدوج يضيء للأعلى والأسفل
+        addBox(W * 0.55, H * 0.36, 0.03, 0, H / 2, -D / 2 + 0.02, secMat);
+        const bulbMat = new THREE.MeshStandardMaterial({
+          color: itemData.color || '#fef3c7',
+          emissive: '#f59e0b',
+          emissiveIntensity: 0.85,
+          roughness: 0.2
+        });
+        addCyl(W * 0.22, W * 0.16, H * 0.38, 0, H * 0.74, 0.02, bulbMat);
+        addCyl(W * 0.16, W * 0.22, H * 0.38, 0, H * 0.26, 0.02, bulbMat);
         break;
       }
 
@@ -531,14 +587,15 @@ window.ProceduralBuilder = {
       }
 
       case 'plant_pot': {
-        const potH = H * 0.35;
-        addCyl(W * 0.38, W * 0.28, potH, 0, potH / 2, 0, secMat);
-        const foliageMat = new THREE.MeshStandardMaterial({ color: itemData.color || '#065f46', roughness: 0.8 });
+        const potH = H * 0.32;
+        addCyl(W * 0.36, W * 0.26, potH, 0, potH / 2, 0, secMat);
+        addCyl(0.025, 0.035, H * 0.42, 0, potH + H * 0.18, 0, new THREE.MeshStandardMaterial({ color: '#5c3a21' }));
+        const foliageMat = new THREE.MeshStandardMaterial({ color: itemData.color || '#065f46', roughness: 0.75 });
         const positions = [
-          [0, potH + H * 0.35, 0, W * 0.45],
-          [-W * 0.2, potH + H * 0.22, W * 0.15, W * 0.32],
-          [W * 0.22, potH + H * 0.25, -W * 0.12, W * 0.35],
-          [0, potH + H * 0.52, 0.05, W * 0.3]
+          [0, potH + H * 0.38, 0, W * 0.44],
+          [-W * 0.22, potH + H * 0.25, W * 0.15, W * 0.32],
+          [W * 0.22, potH + H * 0.28, -W * 0.12, W * 0.34],
+          [0, potH + H * 0.54, 0.04, W * 0.3]
         ];
         positions.forEach(([fx, fy, fz, r]) => {
           const sph = new THREE.Mesh(new THREE.SphereGeometry(r, 16, 16), foliageMat);
@@ -546,6 +603,93 @@ window.ProceduralBuilder = {
           sph.castShadow = true;
           sph.userData.isHitTarget = true;
           group.add(sph);
+        });
+        break;
+      }
+
+      case 'plant_palm_tall': {
+        // شجرة نخيل أريكا استوائية طويلة بسعف متفرع
+        const potH = H * 0.26;
+        addCyl(W * 0.28, W * 0.20, potH, 0, potH / 2, 0, secMat);
+        const leafMat = new THREE.MeshStandardMaterial({ color: itemData.color || '#15803d', roughness: 0.65 });
+        const stemAngles = [0, 1.05, 2.1, 3.14, 4.2, 5.25];
+        stemAngles.forEach((ang, idx) => {
+          const frondGroup = new THREE.Group();
+          frondGroup.position.set(0, potH * 0.9, 0);
+          frondGroup.rotation.y = ang;
+          const tilt = 0.28 + (idx % 2) * 0.16;
+          const stemLen = H * (0.62 + (idx % 3) * 0.08);
+          const blade = new THREE.Mesh(new THREE.BoxGeometry(0.14, stemLen, 0.03), leafMat);
+          blade.position.set(0, stemLen / 2, 0.08);
+          blade.rotation.x = tilt;
+          blade.castShadow = true;
+          blade.userData.isHitTarget = true;
+          frondGroup.add(blade);
+          group.add(frondGroup);
+        });
+        break;
+      }
+
+      case 'plant_olive_tree': {
+        // شجرة زيتون ديكورية بجذع خشبي رفيع وتاج كروي متدرج
+        const potH = H * 0.28;
+        addCyl(W * 0.32, W * 0.25, potH, 0, potH / 2, 0, secMat);
+        const trunkMat = new THREE.MeshStandardMaterial({ color: '#78350f', roughness: 0.85 });
+        addCyl(0.025, 0.04, H * 0.48, 0, potH + H * 0.22, 0, trunkMat);
+        const oliveMat = new THREE.MeshStandardMaterial({ color: itemData.color || '#3f6212', roughness: 0.8 });
+        const clusters = [
+          [0, H * 0.78, 0, W * 0.38],
+          [-W * 0.18, H * 0.68, 0.08, W * 0.26],
+          [W * 0.18, H * 0.72, -0.06, W * 0.28],
+          [0.05, H * 0.88, -0.05, W * 0.25]
+        ];
+        clusters.forEach(([cx, cy, cz, cr]) => {
+          const cMesh = new THREE.Mesh(new THREE.SphereGeometry(cr, 14, 14), oliveMat);
+          cMesh.position.set(cx, cy, cz);
+          cMesh.castShadow = true;
+          cMesh.userData.isHitTarget = true;
+          group.add(cMesh);
+        });
+        break;
+      }
+
+      case 'plant_hanging_ivy': {
+        // نبتة متسلقة متدلية للحائط أو الأرفف
+        addBox(W * 0.7, 0.14, D * 0.7, 0, H - 0.08, 0, secMat);
+        const ivyMat = new THREE.MeshStandardMaterial({ color: itemData.color || '#166534', roughness: 0.75 });
+        const vines = 6;
+        for (let i = 0; i < vines; i++) {
+          const vx = -W * 0.28 + (i / (vines - 1)) * (W * 0.56);
+          const vLen = H * (0.55 + (i % 3) * 0.14);
+          addBox(0.05, vLen, 0.05, vx, H - 0.12 - vLen / 2, D * 0.18, ivyMat);
+        }
+        break;
+      }
+
+      case 'flower_vase_table': {
+        // فازة ورد طبيعي للطاولات
+        addCyl(W * 0.24, W * 0.32, H * 0.55, 0, H * 0.275, 0, secMat);
+        const stemMat = new THREE.MeshStandardMaterial({ color: '#15803d', roughness: 0.7 });
+        addCyl(W * 0.18, W * 0.12, H * 0.25, 0, H * 0.62, 0, stemMat);
+        const bloomMat = new THREE.MeshStandardMaterial({ color: itemData.color || '#be185d', roughness: 0.5 });
+        const blooms = [[0, H * 0.82, 0, 0.075], [-0.07, H * 0.76, 0.04, 0.06], [0.07, H * 0.76, -0.04, 0.06], [0, H * 0.75, 0.07, 0.055]];
+        blooms.forEach(([bx, by, bz, br]) => {
+          const b = new THREE.Mesh(new THREE.SphereGeometry(br, 12, 12), bloomMat);
+          b.position.set(bx, by, bz);
+          b.castShadow = true;
+          b.userData.isHitTarget = true;
+          group.add(b);
+        });
+        break;
+      }
+
+      case 'plant_succulent_set': {
+        // طقم 3 صباريات أنيقة على صينية خشبية
+        addBox(W, 0.025, D, 0, 0.012, 0, secMat);
+        const sucMat = new THREE.MeshStandardMaterial({ color: itemData.color || '#0f766e', roughness: 0.65 });
+        [-W * 0.3, 0, W * 0.3].forEach((px, i) => {
+          addCyl(0.05, 0.04, H * 0.45, px, H * 0.25, 0, whiteMat);
+          addCyl(0.045, 0.02, H * (0.4 + (i % 2) * 0.12), px, H * 0.68, 0, sucMat);
         });
         break;
       }
@@ -786,13 +930,144 @@ window.ProceduralBuilder = {
         break;
       }
 
-      case 'curtain_drape': {
-        addCyl(0.015, 0.015, W + 0.1, 0, H - 0.03, 0, metalMat).rotation.z = Math.PI / 2;
-        const folds = 8;
-        const fw = W / folds;
-        for (let i = 0; i < folds; i++) {
-          addBox(fw * 0.85, H - 0.05, D, -W / 2 + (i + 0.5) * fw, (H - 0.05) / 2, 0, mainMat);
+      case 'curtain_drape':
+      case 'curtain_sheer_double': {
+        // ماسورة الستارة العلوية مع نهايات ذهبية + إمكانية فتح وإزاحة قماش الستارة للجانبين
+        const openPct = typeof itemData.curtainOpenRatio === 'number' ? itemData.curtainOpenRatio : 25;
+        const open01 = Math.max(0, Math.min(0.85, (openPct / 100) * 0.85));
+
+        const rod = addCyl(0.016, 0.016, W + 0.14, 0, H - 0.03, 0, metalMat);
+        rod.rotation.z = Math.PI / 2;
+
+        // إذا كانت ستارة فندقية مزدوجة نضيف طبقة شيفون بيضاء شفافة خلفية تغطي عرض النافذة
+        if (type === 'curtain_sheer_double') {
+          const sheerMat = new THREE.MeshStandardMaterial({
+            color: '#f8fafc',
+            transparent: true,
+            opacity: 0.52,
+            roughness: 0.6
+          });
+          addBox(W * 0.94, H - 0.06, D * 0.3, 0, (H - 0.06) / 2, -D * 0.22, sheerMat);
         }
+
+        // جانب الستارة الأيسر والأيمن (ينكمشان للجانبين عند زيادة نسبة فتح الستارة)
+        const panelSpan = (W / 2) * (1 - open01 * 0.72);
+        const foldsPerSide = 5;
+        const foldW = panelSpan / foldsPerSide;
+
+        // الجانب الأيسر
+        for (let i = 0; i < foldsPerSide; i++) {
+          const fx = -W / 2 + (i + 0.5) * foldW;
+          const fz = (i % 2 === 0 ? 0.012 : -0.012) + (type === 'curtain_sheer_double' ? D * 0.18 : 0);
+          addBox(foldW * 0.88, H - 0.05, D * 0.55, fx, (H - 0.05) / 2, fz, mainMat);
+        }
+        // الجانب الأيمن
+        for (let i = 0; i < foldsPerSide; i++) {
+          const fx = W / 2 - (i + 0.5) * foldW;
+          const fz = (i % 2 === 0 ? 0.012 : -0.012) + (type === 'curtain_sheer_double' ? D * 0.18 : 0);
+          addBox(foldW * 0.88, H - 0.05, D * 0.55, fx, (H - 0.05) / 2, fz, mainMat);
+        }
+        break;
+      }
+
+      case 'curtain_roller_blinds':
+      case 'curtain_roman': {
+        // ستارة رول أو رومانية ترتفع للأعلى حسب نسبة الفتح (curtainOpenRatio)
+        const openPct = typeof itemData.curtainOpenRatio === 'number' ? itemData.curtainOpenRatio : 20;
+        const closedFraction = Math.max(0.12, 1 - (openPct / 100) * 0.85);
+        const boxHeaderH = 0.08;
+        addBox(W, boxHeaderH, D, 0, H - boxHeaderH / 2, 0, secMat);
+
+        const dropH = (H - boxHeaderH) * closedFraction;
+        const dropCenterY = H - boxHeaderH - dropH / 2;
+
+        if (type === 'curtain_roller_blinds') {
+          // شرائح زيبرا أفقية متبادلة
+          const stripes = 8;
+          const sh = dropH / stripes;
+          for (let i = 0; i < stripes; i++) {
+            const sy = H - boxHeaderH - (i + 0.5) * sh;
+            addBox(W * 0.96, sh * 0.85, 0.025, 0, sy, 0, i % 2 === 0 ? mainMat : glassMat);
+          }
+        } else {
+          // طيات قماشية رومانية
+          const pleats = 5;
+          const ph = dropH / pleats;
+          for (let i = 0; i < pleats; i++) {
+            const py = H - boxHeaderH - (i + 0.5) * ph;
+            addBox(W * 0.96, ph * 0.92, D * 0.45, 0, py, (i % 2) * 0.01, mainMat);
+          }
+        }
+        // قضيب الثقل السفلي
+        addBox(W * 0.97, 0.03, 0.04, 0, H - boxHeaderH - dropH, 0, secMat);
+        break;
+      }
+
+      case 'mirror_standing_arch': {
+        // مرآة أرضية طويلة بإطار ذهبي وسطح عاكس
+        addBox(W, H, D * 0.5, 0, H / 2, 0, mainMat);
+        const mirrorGlassMat = new THREE.MeshStandardMaterial({
+          color: '#bae6fd',
+          roughness: 0.05,
+          metalness: 0.85
+        });
+        addBox(W - 0.08, H - 0.08, D * 0.5 + 0.015, 0, H / 2, 0.005, mirrorGlassMat);
+        break;
+      }
+
+      case 'wall_clock_modern': {
+        // ساعة حائط دائرية بإطار وعقارب ذهبية
+        const radius = Math.min(W, H) / 2;
+        const clockRing = addCyl(radius, radius, D, 0, H / 2, 0, mainMat);
+        clockRing.rotation.x = Math.PI / 2;
+        const clockFace = addCyl(radius * 0.88, radius * 0.88, D + 0.01, 0, H / 2, 0, whiteMat);
+        clockFace.rotation.x = Math.PI / 2;
+        // عقرب الساعات والدقائق
+        addBox(0.02, radius * 0.55, 0.02, 0, H / 2 + radius * 0.22, D / 2 + 0.01, metalMat);
+        addBox(radius * 0.45, 0.02, 0.02, radius * 0.18, H / 2, D / 2 + 0.01, metalMat);
+        break;
+      }
+
+      case 'wall_art_triptych': {
+        // طقم 3 لوحات جدارية متجاورة
+        const panelW = (W - 0.12) / 3;
+        [-panelW - 0.05, 0, panelW + 0.05].forEach((px, idx) => {
+          addBox(panelW, H, D, px, H / 2, 0, secMat);
+          addBox(panelW - 0.06, H - 0.06, D + 0.012, px, H / 2, 0.005, idx === 1 ? metalMat : mainMat);
+        });
+        break;
+      }
+
+      case 'floating_shelf_decor': {
+        // رف حائط عائم مع كتب وفازة صغيرة
+        addBox(W, 0.045, D, 0, 0.025, 0, mainMat);
+        addBox(W * 0.22, H * 0.65, D * 0.7, -W * 0.28, 0.045 + H * 0.32, 0, secMat);
+        addCyl(0.07, 0.05, H * 0.72, W * 0.22, 0.045 + H * 0.36, 0, metalMat);
+        break;
+      }
+
+      case 'decor_tray_candles': {
+        // صينية عطور وشموع ديكورية للطاولات
+        addBox(W, 0.025, D, 0, 0.012, 0, mainMat);
+        addCyl(0.045, 0.045, H * 0.75, -W * 0.2, H * 0.38, 0, whiteMat);
+        addCyl(0.04, 0.04, H * 0.55, 0.02, H * 0.28, 0.03, whiteMat);
+        addCyl(0.05, 0.035, H * 0.82, W * 0.22, H * 0.42, -0.02, metalMat);
+        break;
+      }
+
+      case 'coat_stand_wood': {
+        // شماعة ملابس قائمة
+        addCyl(W * 0.38, W * 0.42, 0.04, 0, 0.02, 0, mainMat);
+        addCyl(0.025, 0.032, H - 0.04, 0, H / 2, 0, mainMat);
+        addBox(W * 0.65, 0.025, 0.025, 0, H * 0.88, 0, secMat);
+        addBox(0.025, 0.025, D * 0.65, 0, H * 0.84, 0, secMat);
+        break;
+      }
+
+      case 'laundry_basket_woven': {
+        // سلة خوص أسطوانية بغطاء
+        addCyl(W * 0.46, W * 0.38, H * 0.9, 0, H * 0.45, 0, mainMat);
+        addCyl(W * 0.48, W * 0.48, H * 0.08, 0, H * 0.94, 0, secMat);
         break;
       }
 
