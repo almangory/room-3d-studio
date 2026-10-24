@@ -933,6 +933,33 @@ class RoomStudioApp {
       ? 'berber'
       : (catItem.id === 'rug_runner_corridor' ? 'geometric' : 'persian');
 
+    // حساب الموضع الافتراضي الذكي عند الإضافة لمنع التداخل مع الأثاث القائم وتثبيت أجهزة الحائط
+    let defaultX = targetRoom.offsetX;
+    let defaultZ = targetRoom.offsetZ;
+    let defaultRotation = customProps.rotation ?? 0;
+
+    if (customProps.x === undefined && customProps.z === undefined) {
+      if (isACItem || isWallTVItem) {
+        // مكيفات وشاشات الحائط توضع تلقائياً على الجدار العلوي بمحاذاة تامة
+        defaultZ = Math.round(targetRoom.offsetZ - (targetRoom.depth / 2) + (catItem.depth / 2) + 2);
+        defaultX = targetRoom.offsetX;
+        defaultRotation = 0;
+      } else {
+        // إزاحة ذكية إذا كان هناك عنصر في نقطة الصفر أو مركز الغرفة
+        const itemsNearCenter = this.items.filter(item => {
+          const d = item.userData.itemData;
+          return Math.hypot(d.x - targetRoom.offsetX, d.z - targetRoom.offsetZ) < 35;
+        });
+        if (itemsNearCenter.length > 0) {
+          const step = itemsNearCenter.length * 30;
+          const maxOffX = Math.max(0, (targetRoom.width / 2) - (catItem.width / 2) - 20);
+          const maxOffZ = Math.max(0, (targetRoom.depth / 2) - (catItem.depth / 2) - 20);
+          defaultX = Math.round(targetRoom.offsetX + Math.min(step, maxOffX));
+          defaultZ = Math.round(targetRoom.offsetZ + Math.min(step * 0.7, maxOffZ));
+        }
+      }
+    }
+
     const itemData = {
       uid: customProps.uid || ('item_' + Date.now() + '_' + Math.floor(Math.random() * 10000)),
       catalogId: catItem.id,
@@ -941,9 +968,9 @@ class RoomStudioApp {
       depth: customProps.depth ?? catItem.depth,
       height: customProps.height ?? catItem.height,
       elevation: customProps.elevation ?? catItem.elevation ?? 0,
-      x: customProps.x ?? targetRoom.offsetX,
-      z: customProps.z ?? targetRoom.offsetZ,
-      rotation: customProps.rotation ?? 0,
+      x: customProps.x ?? defaultX,
+      z: customProps.z ?? defaultZ,
+      rotation: defaultRotation,
       color: customProps.color ?? catItem.color,
       secondaryColor: customProps.secondaryColor ?? catItem.secondaryColor,
       ...(isOpeningItem ? {
@@ -3353,10 +3380,55 @@ class RoomStudioApp {
         </button>
       `;
       card.addEventListener('click', () => {
-        this.addFurnitureItem(item.id, {}, true);
+        const added = this.addFurnitureItem(item.id, {}, true);
+        if (added) {
+          const btn = card.querySelector('button');
+          if (btn) {
+            const origText = btn.textContent;
+            btn.textContent = '✓ أُضيف';
+            btn.className = 'px-2 py-1 rounded-lg bg-emerald-600 text-white text-[11px] font-bold transition-all shrink-0 shadow-md shadow-emerald-950/40';
+            setTimeout(() => {
+              btn.textContent = origText;
+              btn.className = 'px-2 py-1 rounded-lg bg-sky-600/20 text-sky-400 group-hover:bg-sky-600 group-hover:text-white text-[11px] font-bold transition-colors shrink-0';
+            }, 1200);
+          }
+          this.showToast(`✨ تمت إضافة "${item.name}" إلى الغرفة`);
+        }
       });
       listEl.appendChild(card);
     });
+  }
+
+  showToast(message, type = 'success') {
+    let container = document.getElementById('app-toast-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'app-toast-container';
+      container.className = 'fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-2 pointer-events-none';
+      document.body.appendChild(container);
+    }
+
+    const toast = document.createElement('div');
+    const isError = type === 'error';
+    toast.className = `px-4 py-2 rounded-2xl shadow-2xl backdrop-blur-md text-xs font-bold text-white flex items-center gap-2 border transition-all duration-300 transform translate-y-3 opacity-0 pointer-events-auto ${
+      isError 
+        ? 'bg-rose-900/95 border-rose-500/50 shadow-rose-950/50' 
+        : 'bg-slate-900/95 border-sky-500/50 shadow-sky-950/50 text-sky-100'
+    }`;
+    toast.innerHTML = `
+      <span class="text-sm">${isError ? '⚠️' : '✅'}</span>
+      <span>${message}</span>
+    `;
+    container.appendChild(toast);
+
+    requestAnimationFrame(() => {
+      toast.classList.remove('translate-y-3', 'opacity-0');
+    });
+
+    setTimeout(() => {
+      toast.classList.add('opacity-0', 'translate-y-2');
+      setTimeout(() => toast.remove(), 350);
+    }, 2800);
   }
 
   setViewMode(mode) {

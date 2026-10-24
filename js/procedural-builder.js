@@ -213,6 +213,7 @@ window.ProceduralBuilder = {
    * بناء مجسم قطعة الأثاث بالكامل حسب أبعادها الحقيقية بالسنتيمتر
    */
   buildFurnitureMesh(itemData) {
+    const data = itemData;
     const group = new THREE.Group();
     const W = itemData.width / 100;  // تحويل من سم إلى متر
     const D = itemData.depth / 100;
@@ -374,7 +375,7 @@ window.ProceduralBuilder = {
       case 'tv_frame_art': {
         const isArtFrame = type === 'tv_frame_art';
         const frameMat = isArtFrame
-          ? new THREE.MeshStandardMaterial({ color: data.color || '#c89d6c', roughness: 0.35, metalness: 0.1 })
+          ? new THREE.MeshStandardMaterial({ color: itemData.color || '#c89d6c', roughness: 0.35, metalness: 0.1 })
           : new THREE.MeshStandardMaterial({ color: '#0f172a', roughness: 0.25, metalness: 0.85 });
 
         // 1. الإطار الخارجي فائق النحافة أو البرواز الخشبي الفني
@@ -412,7 +413,7 @@ window.ProceduralBuilder = {
         addBox(W * 0.45, 0.025, D * 0.56, 0, H / 2 - 0.1, -D * 0.275, chromeMat);
 
         // 4. إضاءة خلفية محيطية خافتة على الجدار (Ambilight Backglow)
-        const ambiColor = data.tvAmbilight || (isArtFrame ? '#ffe4c4' : '#38bdf8');
+        const ambiColor = itemData.tvAmbilight || (isArtFrame ? '#ffe4c4' : '#38bdf8');
         if (ambiColor && ambiColor !== 'transparent') {
           const ambilightMat = new THREE.MeshBasicMaterial({
             color: ambiColor,
@@ -434,7 +435,7 @@ window.ProceduralBuilder = {
       case 'ac_split':
       case 'ac_split_small': {
         const bodyMat = new THREE.MeshStandardMaterial({
-          color: data.color || '#f8fafc',
+          color: itemData.color || '#f8fafc',
           roughness: 0.25,
           metalness: 0.1
         });
@@ -460,7 +461,7 @@ window.ProceduralBuilder = {
         addBox(W * 0.92, 0.028, D * 0.42, 0, H * 0.06, D * 0.22, louverMat);
 
         // 5. شاشة العرض الرقمية لدرجة الحرارة (Digital LED Display - e.g. 18°C)
-        const ledColor = data.acMode === 'fan' ? '#a3e635' : (data.acMode === 'sleep' ? '#c084fc' : '#38bdf8');
+        const ledColor = itemData.acMode === 'fan' ? '#a3e635' : (itemData.acMode === 'sleep' ? '#c084fc' : '#38bdf8');
         const ledMat = new THREE.MeshBasicMaterial({ color: ledColor });
         addBox(0.12, 0.045, 0.01, W * 0.32, H * 0.52, D * 0.435 + 0.005, ledMat);
 
