@@ -207,14 +207,26 @@
           </div>
 
           <!-- اختيار خامة الأرضية ولون الحوائط للغرفة المحددة -->
-          <div class="grid grid-cols-2 gap-2">
-            <div>
-              <label for="room-floor-select" class="block text-[10px] text-slate-400 mb-0.5">أرضية الغرفة</label>
-              <select id="room-floor-select" class="w-full bg-slate-950 text-slate-200 text-xs font-medium px-2 py-1 rounded-lg border border-slate-800"></select>
+          <div class="space-y-1.5">
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label for="room-floor-select" class="block text-[10px] text-slate-400 mb-0.5">أرضية وموكيت الغرفة</label>
+                <select id="room-floor-select" class="w-full bg-slate-950 text-slate-200 text-xs font-medium px-2 py-1 rounded-lg border border-slate-800"></select>
+              </div>
+              <div>
+                <label for="room-wall-select" class="block text-[10px] text-slate-400 mb-0.5">دهان وجدران الغرفة</label>
+                <select id="room-wall-select" class="w-full bg-slate-950 text-slate-200 text-xs font-medium px-2 py-1 rounded-lg border border-slate-800"></select>
+              </div>
             </div>
-            <div>
-              <label for="room-wall-select" class="block text-[10px] text-slate-400 mb-0.5">دهان الغرفة</label>
-              <select id="room-wall-select" class="w-full bg-slate-950 text-slate-200 text-xs font-medium px-2 py-1 rounded-lg border border-slate-800"></select>
+            <div class="grid grid-cols-2 gap-2">
+              <div class="flex items-center justify-between bg-slate-950/80 px-2 py-1 rounded-lg border border-slate-800">
+                <span class="text-[10px] text-slate-400">تدرج موكيت حر:</span>
+                <input id="room-floor-custom" type="color" value="#d8c5b0" class="w-5 h-5 rounded cursor-pointer border-0 bg-transparent p-0" title="اختر تدرج موكيت أو باركيه مخصص">
+              </div>
+              <div class="flex items-center justify-between bg-slate-950/80 px-2 py-1 rounded-lg border border-slate-800">
+                <span class="text-[10px] text-slate-400">دهان جدار حر:</span>
+                <input id="room-wall-custom" type="color" value="#f8fafc" class="w-5 h-5 rounded cursor-pointer border-0 bg-transparent p-0" title="اختر لون دهان مخصص">
+              </div>
             </div>
           </div>
         </div>
@@ -471,6 +483,113 @@
           </div>
         </div>
 
+        <!-- 1.7. إعدادات مفارش الأسرة والوسائد (تظهر تلقائياً عند تحديد أي سرير) -->
+        <div id="bedding-controls" class="hidden bg-slate-950/90 p-3 rounded-2xl border border-indigo-500/40 space-y-3 shadow-lg shadow-indigo-950/20">
+          <div class="flex items-center justify-between">
+            <h4 class="text-xs font-extrabold text-indigo-400 flex items-center gap-1.5">
+              <span>🛏️</span>
+              <span>ألوان المفارش والوسائد للسرير</span>
+            </h4>
+            <span class="text-[10px] text-slate-400 font-medium">مستقل عن هيكل الخشب</span>
+          </div>
+
+          <!-- لون اللحاف / الغطاء العلوي -->
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-slate-300 text-[11px] font-bold">لون اللحاف / المفرش (Duvet):</span>
+              <div class="flex items-center gap-1.5">
+                <span id="bedding-duvet-hex" class="text-[10px] text-slate-400 font-mono">#f8fafc</span>
+                <input id="bed-custom-duvet" type="color" value="#f8fafc" class="w-6 h-6 rounded cursor-pointer border-0 bg-transparent p-0" title="اختر لون مفرش حر">
+              </div>
+            </div>
+            <div id="bedding-duvet-palette" class="flex flex-wrap gap-1.5 p-1 bg-slate-900/60 rounded-xl border border-slate-800/80 max-h-24 overflow-y-auto"></div>
+          </div>
+
+          <!-- لون الشراشف والوسائد -->
+          <div class="space-y-1.5 pt-1 border-t border-slate-800/70">
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-slate-300 text-[11px] font-bold">لون الشراشف والوسائد (Pillows):</span>
+              <div class="flex items-center gap-1.5">
+                <span id="bedding-pillow-hex" class="text-[10px] text-slate-400 font-mono">#ffffff</span>
+                <input id="bed-custom-pillow" type="color" value="#ffffff" class="w-6 h-6 rounded cursor-pointer border-0 bg-transparent p-0" title="اختر لون وسائد حر">
+              </div>
+            </div>
+            <div id="bedding-pillow-palette" class="flex flex-wrap gap-1.5 p-1 bg-slate-900/60 rounded-xl border border-slate-800/80 max-h-24 overflow-y-auto"></div>
+          </div>
+        </div>
+
+        <!-- 1.8. إعدادات وتخصيص السجاد الأرضي (تظهر تلقائياً عند تحديد أي سجادة) -->
+        <div id="rug-controls" class="hidden bg-slate-950/90 p-3 rounded-2xl border border-amber-500/40 space-y-3 shadow-lg shadow-amber-950/20">
+          <div class="flex items-center justify-between">
+            <h4 class="text-xs font-extrabold text-amber-400 flex items-center gap-1.5">
+              <span>🧶</span>
+              <span>أشكال ونقوش السجاد الأرضي</span>
+            </h4>
+            <span id="rug-shape-badge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+              مستطيل
+            </span>
+          </div>
+
+          <!-- اختيار شكل السجادة -->
+          <div>
+            <label class="block text-[11px] text-slate-300 mb-1.5 font-bold">شكل السجادة الهندسي:</label>
+            <div class="grid grid-cols-4 gap-1">
+              <button type="button" data-rug-shape="rect" class="rug-shape-btn py-1.5 rounded-xl text-[10px] font-bold bg-amber-600 text-white transition-all">
+                ▭ مستطيل
+              </button>
+              <button type="button" data-rug-shape="round" class="rug-shape-btn py-1.5 rounded-xl text-[10px] font-bold bg-slate-800 text-slate-200 hover:text-white transition-all">
+                ⚪ دائري
+              </button>
+              <button type="button" data-rug-shape="oval" class="rug-shape-btn py-1.5 rounded-xl text-[10px] font-bold bg-slate-800 text-slate-200 hover:text-white transition-all">
+                ⬯ بيضاوي
+              </button>
+              <button type="button" data-rug-shape="runner" class="rug-shape-btn py-1.5 rounded-xl text-[10px] font-bold bg-slate-800 text-slate-200 hover:text-white transition-all">
+                ═ ممشى
+              </button>
+            </div>
+          </div>
+
+          <!-- اختيار نقشة وزخرفة السجادة -->
+          <div>
+            <label class="block text-[11px] text-slate-300 mb-1.5 font-bold">نمط وزخرفة السجادة:</label>
+            <div class="grid grid-cols-3 gap-1">
+              <button type="button" data-rug-pattern="persian" class="rug-pattern-btn py-1 px-1 rounded-xl text-[10px] font-bold bg-amber-600 text-white transition-all">
+                فارسي كلاسيك
+              </button>
+              <button type="button" data-rug-pattern="geometric" class="rug-pattern-btn py-1 px-1 rounded-xl text-[10px] font-bold bg-slate-800 text-slate-200 hover:text-white transition-all">
+                مودرن هندسي
+              </button>
+              <button type="button" data-rug-pattern="berber" class="rug-pattern-btn py-1 px-1 rounded-xl text-[10px] font-bold bg-slate-800 text-slate-200 hover:text-white transition-all">
+                بوهيمي مغربي
+              </button>
+              <button type="button" data-rug-pattern="striped" class="rug-pattern-btn py-1 px-1 rounded-xl text-[10px] font-bold bg-slate-800 text-slate-200 hover:text-white transition-all">
+                خطوط مقلمة
+              </button>
+              <button type="button" data-rug-pattern="border" class="rug-pattern-btn py-1 px-1 rounded-xl text-[10px] font-bold bg-slate-800 text-slate-200 hover:text-white transition-all col-span-2">
+                إطار فندقي كلاسيكي
+              </button>
+            </div>
+          </div>
+
+          <!-- ألوان السجادة: الأساسي والزخرفة المتباينة -->
+          <div class="grid grid-cols-2 gap-2 pt-1 border-t border-slate-800/80">
+            <div class="bg-slate-900/80 p-2 rounded-xl border border-slate-800 space-y-1">
+              <span class="text-[10px] text-slate-400 block font-medium">اللون الأساسي:</span>
+              <div class="flex items-center justify-between">
+                <input id="rug-custom-primary" type="color" value="#991b1b" class="w-6 h-6 rounded cursor-pointer border-0 bg-transparent p-0" title="اختر اللون الأساسي للسجادة">
+                <span id="rug-primary-hex" class="text-[10px] text-slate-300 font-mono">#991b1b</span>
+              </div>
+            </div>
+            <div class="bg-slate-900/80 p-2 rounded-xl border border-slate-800 space-y-1">
+              <span class="text-[10px] text-slate-400 block font-medium">لون النقشة / الحواف:</span>
+              <div class="flex items-center justify-between">
+                <input id="rug-custom-accent" type="color" value="#f5ebe0" class="w-6 h-6 rounded cursor-pointer border-0 bg-transparent p-0" title="اختر لون النقشة والحواف">
+                <span id="rug-accent-hex" class="text-[10px] text-slate-300 font-mono">#f5ebe0</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- 2. المسافات الصافية عن حوائط الغرفة الحالية بالسنتيمتر -->
         <div class="bg-slate-950/80 p-3 rounded-2xl border border-slate-800/90 space-y-2">
           <h4 class="text-xs font-bold text-amber-400 flex items-center gap-1.5">
@@ -529,10 +648,26 @@
           </div>
         </div>
 
-        <!-- 4. تغيير لون وخامة القطعة -->
-        <div class="bg-slate-950/80 p-3 rounded-2xl border border-slate-800/90">
-          <h4 class="text-xs font-bold text-slate-200 mb-2">🎨 لون العنصر والخامة</h4>
-          <div id="item-color-palette" class="flex flex-wrap gap-2"></div>
+        <!-- 4. تغيير تدرجات الألوان وخامة القطعة -->
+        <div class="bg-slate-950/80 p-3 rounded-2xl border border-slate-800/90 space-y-2">
+          <div class="flex items-center justify-between">
+            <h4 class="text-xs font-bold text-slate-200">🎨 تدرجات الألوان وخامة العنصر</h4>
+            <div class="flex items-center gap-1.5">
+              <span id="item-color-hex" class="text-[10px] text-slate-400 font-mono">#8b5a2b</span>
+              <input id="item-custom-color" type="color" value="#8b5a2b" class="w-6 h-6 rounded cursor-pointer border-0 bg-transparent p-0" title="اختر أي لون دقيق من عجلة الألوان">
+            </div>
+          </div>
+          <!-- شبكة التدرجات الجاهزة الـ 36+ -->
+          <div id="item-color-palette" class="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto p-1 bg-slate-900/60 rounded-xl border border-slate-800/80"></div>
+          
+          <!-- لون ثانوي / إطار خشب أو أرجل عند الحاجة -->
+          <div id="item-secondary-color-wrap" class="hidden pt-1.5 border-t border-slate-800/80 flex items-center justify-between text-xs">
+            <span class="text-slate-400 text-[11px] font-medium">لون الإطار / المكمل:</span>
+            <div class="flex items-center gap-1.5">
+              <span id="item-secondary-hex" class="text-[10px] text-slate-400 font-mono">#2b2019</span>
+              <input id="item-secondary-color" type="color" value="#2b2019" class="w-6 h-6 rounded cursor-pointer border-0 bg-transparent p-0" title="اختر لون الهيكل الثانوي أو الأرجل">
+            </div>
+          </div>
         </div>
 
         <!-- 5. أزرار التكرار والحذف -->

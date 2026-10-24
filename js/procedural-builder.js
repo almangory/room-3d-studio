@@ -77,6 +77,104 @@ window.ProceduralBuilder = {
   },
 
   /**
+   * توليد خامة ونقشة السجاد الأرضي برمجياً (شرقي، هندسي، مغربي بوهيمي، مخطط، إطار كلاسيكي)
+   */
+  createRugTexture(pattern = 'persian', primaryColor = '#991b1b', accentColor = '#f5ebe0') {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+
+    // الخلفية الأساسية للسجادة
+    ctx.fillStyle = primaryColor;
+    ctx.fillRect(0, 0, 512, 512);
+
+    // حبيبات نسيج السجادة الناعم
+    for (let i = 0; i < 2200; i++) {
+      ctx.fillStyle = i % 2 === 0 ? 'rgba(255,255,255,0.035)' : 'rgba(0,0,0,0.035)';
+      ctx.fillRect(Math.random() * 512, Math.random() * 512, 3, 3);
+    }
+
+    ctx.strokeStyle = accentColor;
+    ctx.fillStyle = accentColor;
+
+    if (pattern === 'persian') {
+      // إطار خارجي مزدوج + ميدالية شرقية في المنتصف + زخارف أركان
+      ctx.lineWidth = 14;
+      ctx.strokeRect(26, 26, 460, 460);
+      ctx.lineWidth = 4;
+      ctx.strokeRect(48, 48, 416, 416);
+
+      // ميدالية معينة وسطية
+      ctx.beginPath();
+      ctx.moveTo(256, 110);
+      ctx.lineTo(380, 256);
+      ctx.lineTo(256, 402);
+      ctx.lineTo(132, 256);
+      ctx.closePath();
+      ctx.lineWidth = 8;
+      ctx.stroke();
+
+      // دائرة وزهرة وسطية
+      ctx.beginPath();
+      ctx.arc(256, 256, 52, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = primaryColor;
+      ctx.beginPath();
+      ctx.arc(256, 256, 26, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (pattern === 'geometric') {
+      // أشكال هندسية مودرن متداخلة
+      ctx.lineWidth = 12;
+      ctx.strokeRect(24, 24, 464, 464);
+      const step = 128;
+      ctx.lineWidth = 6;
+      for (let x = 64; x < 448; x += step) {
+        for (let y = 64; y < 448; y += step) {
+          ctx.strokeRect(x, y, 96, 96);
+          ctx.fillRect(x + 32, y + 32, 32, 32);
+        }
+      }
+    } else if (pattern === 'berber') {
+      // نقشة مغربية بوهيمية (خطوط متقاطعة بمعينات)
+      ctx.lineWidth = 8;
+      for (let row = 0; row < 4; row++) {
+        const y0 = 40 + row * 110;
+        ctx.beginPath();
+        ctx.moveTo(40, y0 + 55);
+        ctx.lineTo(148, y0);
+        ctx.lineTo(256, y0 + 55);
+        ctx.lineTo(364, y0);
+        ctx.lineTo(472, y0 + 55);
+        ctx.lineTo(364, y0 + 110);
+        ctx.lineTo(256, y0 + 55);
+        ctx.lineTo(148, y0 + 110);
+        ctx.closePath();
+        ctx.stroke();
+      }
+    } else if (pattern === 'striped') {
+      // خطوط كليم عصرية متناوبة
+      const stripes = 9;
+      const sh = 512 / stripes;
+      for (let i = 0; i < stripes; i++) {
+        if (i % 2 === 1) {
+          ctx.fillRect(20, i * sh + 8, 472, sh - 16);
+        }
+      }
+    } else {
+      // سادة فندقية بإطار كلاسيكي أنيق
+      ctx.lineWidth = 18;
+      ctx.strokeRect(32, 32, 448, 448);
+      ctx.lineWidth = 4;
+      ctx.strokeRect(58, 58, 396, 396);
+    }
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.needsUpdate = true;
+    return texture;
+  },
+
+  /**
    * إنشاء لافتة نصية ثنائية الأبعاد عائمة في الفضاء الثلاثي (3D Dimension Label Sprite)
    * ملاحظة هامة: جميع اللافتات تحمل userData.ignoreRaycast = true لمنع تداخل النقر والتحديد!
    */
@@ -294,20 +392,50 @@ window.ProceduralBuilder = {
         const frameH = H * 0.28;
         const mattH = H * 0.22;
         const headD = 0.12;
+
+        // ألوان مخصصة للمفرش (اللحاف) والوسائد والملاية بشكل مستقل عن هيكل السرير
+        const duvetColor = itemData.beddingColor || itemData.color || '#d6ccc2';
+        const pillowColorHex = itemData.pillowColor || '#ffffff';
+
+        const duvetMat = new THREE.MeshStandardMaterial({
+          color: duvetColor,
+          roughness: 0.65,
+          metalness: 0.05
+        });
+        const pillowSheetMat = new THREE.MeshStandardMaterial({
+          color: pillowColorHex,
+          roughness: 0.55
+        });
+
+        // 1. قاعدة وإطار السرير الخشبي
         addBox(W, frameH, D, 0, frameH / 2, 0, secMat);
-        addBox(W * 0.94, mattH, D * 0.92, 0, frameH + mattH / 2, 0.04, whiteMat);
-        addBox(W * 0.95, mattH + 0.02, D * 0.62, 0, frameH + mattH / 2 + 0.01, D * 0.16, mainMat);
+        // 2. المرتبة والملاية السفلية
+        addBox(W * 0.94, mattH, D * 0.92, 0, frameH + mattH / 2, 0.04, pillowSheetMat);
+        // 3. المفرش / اللحاف الفندقي العلوي
+        addBox(W * 0.96, mattH + 0.025, D * 0.64, 0, frameH + mattH / 2 + 0.015, D * 0.15, duvetMat);
+        // شريط ديكوري عند طرف السرير (Bed Runner)
+        addBox(W * 0.97, mattH + 0.035, D * 0.16, 0, frameH + mattH / 2 + 0.02, D * 0.36, secMat);
+        // 4. ظهر السرير المبطن (Headboard)
         addBox(W, H, headD, 0, H / 2, -D / 2 + headD / 2, mainMat);
+
+        // 5. الوسائد الخلفية والأمامية
         const pillows = type === 'bed_king' ? 2 : 1;
-        const pw = (W * 0.75) / pillows;
+        const pw = (W * 0.76) / pillows;
         for (let i = 0; i < pillows; i++) {
           const px = pillows === 2 ? (i === 0 ? -W * 0.22 : W * 0.22) : 0;
-          addBox(pw, 0.12, 0.28, px, frameH + mattH + 0.06, -D / 2 + headD + 0.18, whiteMat);
+          addBox(pw, 0.12, 0.28, px, frameH + mattH + 0.06, -D / 2 + headD + 0.16, pillowSheetMat);
+          // وسادة ديكورية صغيرة بلون المفرش
+          addBox(pw * 0.65, 0.10, 0.18, px, frameH + mattH + 0.06, -D / 2 + headD + 0.34, duvetMat);
         }
         break;
       }
 
       case 'bunk_bed': {
+        const duvetColor = itemData.beddingColor || itemData.color || '#0284c7';
+        const pillowColorHex = itemData.pillowColor || '#ffffff';
+        const duvetMat = new THREE.MeshStandardMaterial({ color: duvetColor, roughness: 0.65 });
+        const pillowSheetMat = new THREE.MeshStandardMaterial({ color: pillowColorHex, roughness: 0.55 });
+
         // 4 قوائم ركنية + سريرين سفلي وعلوي + سلم
         const p = 0.06;
         addBox(p, H, p, -W / 2 + p / 2, H / 2, -D / 2 + p / 2, secMat);
@@ -315,11 +443,13 @@ window.ProceduralBuilder = {
         addBox(p, H, p, -W / 2 + p / 2, H / 2, D / 2 - p / 2, secMat);
         addBox(p, H, p, W / 2 - p / 2, H / 2, D / 2 - p / 2, secMat);
         // السرير السفلي
-        addBox(W - 0.04, 0.18, D - 0.04, 0, 0.32, 0, mainMat);
-        addBox(W * 0.7, 0.1, 0.25, 0, 0.45, -D / 2 + 0.22, whiteMat);
+        addBox(W - 0.04, 0.16, D - 0.04, 0, 0.30, 0, pillowSheetMat);
+        addBox(W - 0.03, 0.18, D * 0.65, 0, 0.32, D * 0.14, duvetMat);
+        addBox(W * 0.7, 0.1, 0.25, 0, 0.45, -D / 2 + 0.22, pillowSheetMat);
         // السرير العلوي
-        addBox(W - 0.04, 0.18, D - 0.04, 0, H * 0.68, 0, mainMat);
-        addBox(W * 0.7, 0.1, 0.25, 0, H * 0.68 + 0.13, -D / 2 + 0.22, whiteMat);
+        addBox(W - 0.04, 0.16, D - 0.04, 0, H * 0.67, 0, pillowSheetMat);
+        addBox(W - 0.03, 0.18, D * 0.65, 0, H * 0.68, D * 0.14, duvetMat);
+        addBox(W * 0.7, 0.1, 0.25, 0, H * 0.68 + 0.13, -D / 2 + 0.22, pillowSheetMat);
         // حواجز أمان علوية
         addBox(0.03, 0.25, D, -W / 2 + 0.03, H * 0.82, 0, secMat);
         addBox(0.03, 0.25, D * 0.7, W / 2 - 0.03, H * 0.82, -D * 0.15, secMat);
@@ -327,7 +457,14 @@ window.ProceduralBuilder = {
       }
 
       case 'baby_crib': {
-        addBox(W, 0.15, D, 0, 0.35, 0, whiteMat);
+        const duvetColor = itemData.beddingColor || '#bae6fd';
+        const pillowColorHex = itemData.pillowColor || '#ffffff';
+        const duvetMat = new THREE.MeshStandardMaterial({ color: duvetColor, roughness: 0.65 });
+        const pillowSheetMat = new THREE.MeshStandardMaterial({ color: pillowColorHex, roughness: 0.55 });
+
+        addBox(W * 0.94, 0.12, D * 0.94, 0, 0.34, 0, pillowSheetMat);
+        addBox(W * 0.92, 0.14, D * 0.6, 0, 0.36, D * 0.14, duvetMat);
+        addBox(W * 0.55, 0.07, 0.2, 0, 0.43, -D * 0.28, pillowSheetMat);
         addBox(W, H, 0.04, 0, H / 2, -D / 2 + 0.02, mainMat);
         addBox(W, H, 0.04, 0, H / 2, D / 2 - 0.02, mainMat);
         addBox(0.04, H, D, -W / 2 + 0.02, H / 2, 0, mainMat);
@@ -497,18 +634,45 @@ window.ProceduralBuilder = {
         break;
       }
 
-      case 'rug_large': {
-        addBox(W, 0.015, D, 0, 0.008, 0, mainMat, false);
-        addBox(W * 0.86, 0.018, D * 0.84, 0, 0.01, 0, secMat, false);
-        addBox(W * 0.72, 0.02, D * 0.68, 0, 0.012, 0, mainMat, false);
-        break;
-      }
+      case 'rug_large':
+      case 'rug_round_boho':
+      case 'rug_oval_luxury':
+      case 'rug_runner_corridor': {
+        const defaultShape = type === 'rug_round_boho'
+          ? 'round'
+          : (type === 'rug_oval_luxury' ? 'oval' : (type === 'rug_runner_corridor' ? 'runner' : 'rect'));
+        const defaultPattern = type === 'rug_round_boho'
+          ? 'berber'
+          : (type === 'rug_runner_corridor' ? 'geometric' : 'persian');
 
-      case 'rug_round_boho': {
-        const radius = Math.min(W, D) / 2;
-        addCyl(radius, radius, 0.014, 0, 0.007, 0, mainMat);
-        addCyl(radius * 0.76, radius * 0.76, 0.018, 0, 0.010, 0, secMat);
-        addCyl(radius * 0.45, radius * 0.45, 0.021, 0, 0.012, 0, mainMat);
+        const rugShape = itemData.rugShape || defaultShape;
+        const rugPattern = itemData.rugPattern || defaultPattern;
+        const rugTex = this.createRugTexture(rugPattern, itemData.color || '#991b1b', itemData.secondaryColor || '#f5ebe0');
+
+        const rugMat = new THREE.MeshStandardMaterial({
+          map: rugTex,
+          roughness: 0.92,
+          metalness: 0.02
+        });
+
+        if (rugShape === 'round') {
+          const radius = Math.min(W, D) / 2;
+          const cyl = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, 0.018, 40), rugMat);
+          cyl.position.set(0, 0.009, 0);
+          cyl.receiveShadow = true;
+          cyl.userData.isHitTarget = true;
+          group.add(cyl);
+        } else if (rugShape === 'oval') {
+          const cyl = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.018, 40), rugMat);
+          cyl.scale.set(W, 1, D);
+          cyl.position.set(0, 0.009, 0);
+          cyl.receiveShadow = true;
+          cyl.userData.isHitTarget = true;
+          group.add(cyl);
+        } else {
+          // مستطيلة أو مشاية طويلة
+          addBox(W, 0.018, D, 0, 0.009, 0, rugMat, false);
+        }
         break;
       }
 

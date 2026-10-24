@@ -5,14 +5,33 @@
 
 window.ROOM_MATERIALS = {
   floors: [
+    // باركيه وأخشاب
     { id: 'oak_parquet', name: 'باركيه بلوط طبيعي', color: '#c89d6c', roughness: 0.4, type: 'parquet' },
     { id: 'walnut_wood', name: 'خشب جوز داكن فخم', color: '#6e472b', roughness: 0.35, type: 'parquet' },
+    { id: 'ash_light_wood', name: 'باركيه خشب دردار فاتح', color: '#e2cfb8', roughness: 0.4, type: 'parquet' },
+    { id: 'cherry_wood', name: 'باركيه خشب كرز دافئ', color: '#8d493a', roughness: 0.38, type: 'parquet' },
+    // رخام وسيراميك
     { id: 'white_marble', name: 'رخام كرارا أبيض', color: '#f1f5f9', roughness: 0.15, type: 'marble' },
+    { id: 'black_marble', name: 'رخام أسود ملكي بعروق', color: '#1e293b', roughness: 0.15, type: 'marble' },
     { id: 'beige_ceramic', name: 'سيراميك بيج دافئ', color: '#e6dcc8', roughness: 0.25, type: 'tiles' },
     { id: 'gray_concrete', name: 'بورسلين رمادي عصري', color: '#94a3b8', roughness: 0.5, type: 'tiles' },
     { id: 'kitchen_tiles', name: 'بلاط شطرنجي للمطابخ', color: '#cbd5e1', roughness: 0.3, type: 'checker' },
     { id: 'aqua_tiles', name: 'سيراميك حمامات أكوا', color: '#bae6fd', roughness: 0.2, type: 'tiles' },
-    { id: 'soft_carpet', name: 'موكيت بيج ناعم', color: '#d6ccc2', roughness: 0.9, type: 'carpet' }
+    // جميع تدرجات الموكيت السجاد الكامل للغرف (Full Carpet / Moquette Gradients)
+    { id: 'soft_carpet', name: 'موكيت بيج رملي ناعم', color: '#d6ccc2', roughness: 0.92, type: 'carpet' },
+    { id: 'carpet_ivory', name: 'موكيت أوف وايت / لؤلؤي', color: '#f5f0e6', roughness: 0.92, type: 'carpet' },
+    { id: 'carpet_silver_gray', name: 'موكيت رمادي فضي فاتح', color: '#cbd5e1', roughness: 0.92, type: 'carpet' },
+    { id: 'carpet_warm_gray', name: 'موكيت رمادي دافئ (غريج)', color: '#9ca3af', roughness: 0.92, type: 'carpet' },
+    { id: 'carpet_charcoal', name: 'موكيت رمادي فحمي داكن', color: '#334155', roughness: 0.92, type: 'carpet' },
+    { id: 'carpet_camel', name: 'موكيت جملي / كافيه دافئ', color: '#b08968', roughness: 0.92, type: 'carpet' },
+    { id: 'carpet_mocha', name: 'موكيت بني موكا فخم', color: '#6c584c', roughness: 0.92, type: 'carpet' },
+    { id: 'carpet_navy', name: 'موكيت كحلي فندقي ملكي', color: '#1e3a8a', roughness: 0.92, type: 'carpet' },
+    { id: 'carpet_sky', name: 'موكيت أزرق سماوي هادئ', color: '#7dd3fc', roughness: 0.92, type: 'carpet' },
+    { id: 'carpet_emerald', name: 'موكيت أخضر زمردي فخم', color: '#065f46', roughness: 0.92, type: 'carpet' },
+    { id: 'carpet_sage', name: 'موكيت أخضر ميرمية زيتوني', color: '#84a98c', roughness: 0.92, type: 'carpet' },
+    { id: 'carpet_burgundy', name: 'موكيت عنابي / خمري ملكي', color: '#7f1d1d', roughness: 0.92, type: 'carpet' },
+    { id: 'carpet_blush_pink', name: 'موكيت وردي بودرة ناعم', color: '#f4acb7', roughness: 0.92, type: 'carpet' },
+    { id: 'carpet_lavender', name: 'موكيت لافندر بنفسجي هادئ', color: '#c4b5fd', roughness: 0.92, type: 'carpet' }
   ],
   walls: [
     { id: 'warm_white', name: 'أبيض دافئ (أوف وايت)', color: '#f8fafc' },
@@ -21,23 +40,72 @@ window.ROOM_MATERIALS = {
     { id: 'sky_breeze', name: 'أزرق سماوي هادئ', color: '#dbeafe' },
     { id: 'slate_gray', name: 'رمادي فحمي أنيق', color: '#cbd5e1' },
     { id: 'terracotta', name: 'بيج رملي دافئ', color: '#e3d5ca' },
-    { id: 'lavender_soft', name: 'لافندر ناعم', color: '#ede9fe' }
+    { id: 'lavender_soft', name: 'لافندر ناعم', color: '#ede9fe' },
+    { id: 'blush_rose', name: 'وردي باستيل دافئ', color: '#fce7f3' },
+    { id: 'pale_olive', name: 'زيتوني فاتح', color: '#ecfccb' },
+    { id: 'navy_accent', name: 'كحلي عصري عميق', color: '#1e293b' }
   ],
   furnitureColors: [
-    { name: 'رمادي عصري', hex: '#475569' },
-    { name: 'بيج كتان', hex: '#d6ccc2' },
-    { name: 'كحلي ملكي', hex: '#1e3a8a' },
-    { name: 'أخضر زمردي', hex: '#065f46' },
-    { name: 'جملي جلد', hex: '#b45309' },
-    { name: 'خشب بلوط', hex: '#a97142' },
-    { name: 'خشب جوز', hex: '#5c3a21' },
+    // تدرجات الأبيض والبيج والرمادي
     { name: 'أبيض ناصع', hex: '#f8fafc' },
-    { name: 'أسود مطفي', hex: '#1e293b' },
-    { name: 'وردي هادئ', hex: '#be185d' },
+    { name: 'أوف وايت كريمي', hex: '#f5ebe0' },
+    { name: 'بيج كتان فاتح', hex: '#e6ccb2' },
+    { name: 'بيج رملي', hex: '#d6ccc2' },
+    { name: 'غريج دافئ', hex: '#a8a29e' },
+    { name: 'رمادي فضي فاتح', hex: '#cbd5e1' },
+    { name: 'رمادي متوسط', hex: '#64748b' },
+    { name: 'رمادي عصري داكن', hex: '#475569' },
+    { name: 'رمادي أنثراسيت', hex: '#334155' },
+    { name: 'أسود مطفي فخم', hex: '#1e293b' },
+    // تدرجات الأخشاب والجلود والبني
+    { name: 'خشب صنوبر فاتح', hex: '#deb887' },
+    { name: 'خشب بلوط طبيعي', hex: '#a97142' },
+    { name: 'خشب عسلي دافئ', hex: '#c87d55' },
+    { name: 'جملي جلد طبيعي', hex: '#b45309' },
+    { name: 'بني كاكاو', hex: '#7f5539' },
+    { name: 'خشب جوز داكن', hex: '#5c3a21' },
+    { name: 'خشب إسبريسو محروق', hex: '#3b2314' },
+    // تدرجات الأزرق والتركواز
+    { name: 'أزرق ثلجي فاتح', hex: '#bae6fd' },
+    { name: 'أزرق سماوي', hex: '#38bdf8' },
+    { name: 'أزرق بترولي', hex: '#0284c7' },
+    { name: 'كحلي ملكي', hex: '#1e3a8a' },
+    { name: 'كحلي ليلي عميق', hex: '#172554' },
+    { name: 'تركواز بحري', hex: '#0f766e' },
+    // تدرجات الأخضر والزيتوني
+    { name: 'أخضر نعناعي فاتح', hex: '#a7f3d0' },
+    { name: 'أخضر ميرمية هادئ', hex: '#84a98c' },
+    { name: 'أخضر زيتوني', hex: '#4d7c0f' },
+    { name: 'أخضر زمردي ملكي', hex: '#065f46' },
+    { name: 'أخضر غابات داكن', hex: '#14532d' },
+    // تدرجات الأصفر والبرتقالي والأحمر والوردي والبنفسجي
+    { name: 'أصفر خردلي (مسطردة)', hex: '#eab308' },
     { name: 'ذهبي معدني', hex: '#d97706' },
-    { name: 'تركواز', hex: '#0f766e' },
-    { name: 'فضي ستانلس', hex: '#94a3b8' },
-    { name: 'عنابي فخم', hex: '#7f1d1d' }
+    { name: 'برتقالي تيراكوتا', hex: '#ea580c' },
+    { name: 'مرجاني دافئ', hex: '#f43f5e' },
+    { name: 'وردي بودرة ناعم', hex: '#f472b6' },
+    { name: 'وردي كشمير فخم', hex: '#be185d' },
+    { name: 'عنابي خمري ملكي', hex: '#7f1d1d' },
+    { name: 'لافندر بنفسجي فاتح', hex: '#a78bfa' },
+    { name: 'بنفسجي ملكي عميق', hex: '#581c87' }
+  ],
+  beddingColors: [
+    { name: 'أبيض فندقي ناصع', hex: '#ffffff' },
+    { name: 'أوف وايت حريري', hex: '#f8f5f0' },
+    { name: 'بيج كتان دافئ', hex: '#e3d5ca' },
+    { name: 'كافيه لاتيه', hex: '#b08968' },
+    { name: 'رمادي لؤلؤي فاتح', hex: '#e2e8f0' },
+    { name: 'رمادي فحمي مودرن', hex: '#475569' },
+    { name: 'أزرق سماوي هادئ', hex: '#bae6fd' },
+    { name: 'أزرق ملكي كحلي', hex: '#1e3a8a' },
+    { name: 'تركواز بترولي', hex: '#0f766e' },
+    { name: 'أخضر ميرمية ناعم', hex: '#a3b18a' },
+    { name: 'أخضر زمردي فخم', hex: '#065f46' },
+    { name: 'وردي كشمير هادئ', hex: '#f4acb7' },
+    { name: 'توتي / عنابي دافئ', hex: '#9d174d' },
+    { name: 'أصفر خردلي عصري', hex: '#eab308' },
+    { name: 'لافندر مريح للعين', hex: '#ddd6fe' },
+    { name: 'مشمشي / تيراكوتا', hex: '#fdba74' }
   ]
 };
 
@@ -392,12 +460,22 @@ window.FURNITURE_CATALOG = [
   {
     id: 'rug_large', name: 'سجادة أرضية مستطيلة منقوشة', category: 'decor',
     width: 240, depth: 170, height: 2, elevation: 0,
-    color: '#b45309', secondaryColor: '#f5ebe0', icon: '🧶'
+    color: '#991b1b', secondaryColor: '#f5ebe0', rugShape: 'rect', rugPattern: 'persian', icon: '🧶'
   },
   {
     id: 'rug_round_boho', name: 'سجادة دائرية بوهيمية ناعمة للغرف', category: 'decor',
     width: 160, depth: 160, height: 2, elevation: 0,
-    color: '#d6ccc2', secondaryColor: '#b45309', icon: '⭕'
+    color: '#d6ccc2', secondaryColor: '#b45309', rugShape: 'round', rugPattern: 'berber', icon: '⭕'
+  },
+  {
+    id: 'rug_oval_luxury', name: 'سجادة بيضاوية فاخرة للصالات وغرف النوم', category: 'decor',
+    width: 220, depth: 150, height: 2, elevation: 0,
+    color: '#1e3a8a', secondaryColor: '#eab308', rugShape: 'oval', rugPattern: 'persian', icon: '🥚'
+  },
+  {
+    id: 'rug_runner_corridor', name: 'سجادة مشاية طويلة للممرات وجانب السرير', category: 'decor',
+    width: 85, depth: 240, height: 2, elevation: 0,
+    color: '#065f46', secondaryColor: '#f5ebe0', rugShape: 'runner', rugPattern: 'geometric', icon: '🛤️'
   }
 ];
 

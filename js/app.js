@@ -339,15 +339,17 @@ class RoomStudioApp {
       const singleRoomContainer = new THREE.Group();
       singleRoomContainer.position.set(ox, 0, oz);
 
-      // 1. أرضية الغرفة
+      // 1. أرضية وموكيت الغرفة
       const floorMatData = window.ROOM_MATERIALS.floors.find(f => f.id === room.floorId) || window.ROOM_MATERIALS.floors[0];
-      const floorTex = window.ProceduralBuilder.createFloorTexture(floorMatData.type, floorMatData.color);
+      const floorColor = room.customFloorColor || floorMatData.color;
+      const floorType = room.customFloorColor ? 'carpet' : floorMatData.type;
+      const floorTex = window.ProceduralBuilder.createFloorTexture(floorType, floorColor);
       floorTex.repeat.set(W / 1.5, D / 1.5);
 
       const floorGeo = new THREE.BoxGeometry(W, 0.08, D);
       const floorMat = new THREE.MeshStandardMaterial({
         map: floorTex,
-        roughness: floorMatData.roughness
+        roughness: room.customFloorColor ? 0.95 : floorMatData.roughness
       });
       const floorMesh = new THREE.Mesh(floorGeo, floorMat);
       floorMesh.position.set(0, -0.04, 0);
@@ -389,6 +391,7 @@ class RoomStudioApp {
 
       // 3. الحوائط الأربعة للغرفة
       const wallData = window.ROOM_MATERIALS.walls.find(w => w.id === room.wallId) || window.ROOM_MATERIALS.walls[0];
+      const wallColor = room.customWallColor || wallData.color;
 
       const createWall = (w, h, d, lx, ly, lz, normalVec, side) => {
         // فحص هل هذا الحائط مشترك مع غرفة مجاورة أخرى (Internal Partition Wall)
@@ -409,7 +412,7 @@ class RoomStudioApp {
         });
 
         const mat = new THREE.MeshStandardMaterial({
-          color: wallData.color,
+          color: wallColor,
           roughness: 0.85,
           transparent: true,
           opacity: 1.0
@@ -560,13 +563,21 @@ class RoomStudioApp {
     this.pushHistory('حذف غرفة');
   }
 
-  // ==================== فحص ما إذا كان العنصر باباً أو نافذة أو ستارة ====================
+  // ==================== فحص تصنيف ونوعية العناصر الخاصة ====================
   isDoorOrWindow(catalogId) {
     return ['door_wood', 'door_double', 'door_sliding_glass', 'window_glass'].includes(catalogId);
   }
 
   isCurtain(catalogId) {
     return ['curtain_drape', 'curtain_sheer_double', 'curtain_roller_blinds', 'curtain_roman'].includes(catalogId);
+  }
+
+  isBed(catalogId) {
+    return ['bed_king', 'bed_single', 'bunk_bed', 'baby_crib'].includes(catalogId);
+  }
+
+  isRug(catalogId) {
+    return ['rug_persian', 'rug_large', 'rug_round_boho', 'rug_oval_luxury', 'rug_runner_corridor'].includes(catalogId);
   }
 
   // ==================== إضافة وتحديث قطع الأثاث ====================
@@ -577,8 +588,17 @@ class RoomStudioApp {
     const targetRoom = this.activeRoom;
     const isOpeningItem = this.isDoorOrWindow(catItem.id);
     const isCurtainItem = this.isCurtain(catItem.id);
+    const isBedItem = this.isBed(catItem.id);
+    const isRugItem = this.isRug(catItem.id);
     const defaultOpenType = (catItem.id === 'door_sliding_glass' || catItem.id === 'window_glass') ? 'sliding' : 'hinged';
     const defaultHingeSide = catItem.id === 'door_double' ? 'both' : 'right';
+
+    const defaultRugShape = catItem.id === 'rug_round_boho'
+      ? 'round'
+      : (catItem.id === 'rug_oval_luxury' ? 'oval' : (catItem.id === 'rug_runner_corridor' ? 'runner' : 'rect'));
+    const defaultRugPattern = catItem.id === 'rug_round_boho'
+      ? 'berber'
+      : (catItem.id === 'rug_runner_corridor' ? 'geometric' : 'persian');
 
     const itemData = {
       uid: customProps.uid || ('item_' + Date.now() + '_' + Math.floor(Math.random() * 10000)),
@@ -601,6 +621,14 @@ class RoomStudioApp {
       } : {}),
       ...(isCurtainItem ? {
         curtainOpenRatio: typeof customProps.curtainOpenRatio === 'number' ? customProps.curtainOpenRatio : 25
+      } : {}),
+      ...(isBedItem ? {
+        beddingColor: customProps.beddingColor || catItem.beddingColor || '#f8fafc',
+        pillowColor: customProps.pillowColor || catItem.pillowColor || '#ffffff'
+      } : {}),
+      ...(isRugItem ? {
+        rugShape: customProps.rugShape || catItem.rugShape || defaultRugShape,
+        rugPattern: customProps.rugPattern || catItem.rugPattern || defaultRugPattern
       } : {})
     };
 
@@ -765,7 +793,7 @@ class RoomStudioApp {
       this.items.forEach(otherGroup => {
         if (otherGroup === doorGroup) return;
         const o = otherGroup.userData.itemData;
-        if (o.catalogId === 'rug_large') return; // السجاد الأرضي لا يعيق حركة الباب
+        if (this.isRug(o.catalogId)) return; // جميع أنواع السجاد الأرضي لا تعيق حركة الباب
         if (this.isDoorOrWindow(o.catalogId)) return;
 
         // فحص التداخل الرأسي (مثلاً تكييف عالي فوق الباب لا يعيق فتحه)
@@ -989,8 +1017,38 @@ class RoomStudioApp {
     const rotLabel = document.getElementById('rotation-val-label');
     if (rotLabel) rotLabel.textContent = `${Math.round(d.rotation)}°`;
 
+    // تحديث قيم اللون المختار للقطعة
+    const colorInput = document.getElementById('item-custom-color');
+    if (colorInput && d.color) {
+      colorInput.value = d.color.startsWith('#') ? d.color : '#' + d.color;
+    }
+    const colorHex = document.getElementById('item-color-hex');
+    if (colorHex && d.color) {
+      colorHex.textContent = d.color;
+    }
+
+    // إظهار حقل اللون الثانوي إذا كانت القطعة تدعم لوناً إضافياً أو كانت سجادة
+    const secWrap = document.getElementById('item-secondary-color-wrap');
+    if (secWrap) {
+      if (d.secondaryColor || this.isRug(d.catalogId)) {
+        secWrap.classList.remove('hidden');
+        const secInput = document.getElementById('item-secondary-color');
+        if (secInput && d.secondaryColor) {
+          secInput.value = d.secondaryColor.startsWith('#') ? d.secondaryColor : '#' + d.secondaryColor;
+        }
+        const secHex = document.getElementById('item-secondary-hex');
+        if (secHex && d.secondaryColor) {
+          secHex.textContent = d.secondaryColor;
+        }
+      } else {
+        secWrap.classList.add('hidden');
+      }
+    }
+
     this.syncDoorWindowInspectorUI();
     this.syncCurtainInspectorUI();
+    this.syncBeddingInspectorUI();
+    this.syncRugInspectorUI();
   }
 
   /**
@@ -1085,6 +1143,99 @@ class RoomStudioApp {
     this.updateItemTransform(this.selectedItem);
     this.syncInspectorValues();
     this.pushHistory('مطابقة الستارة مع النافذة');
+  }
+
+  /**
+   * مزامنة لوحة التحكم الخاصة بمفارش الأسرة وألوان الوسائد والشراشف
+   */
+  syncBeddingInspectorUI() {
+    const panel = document.getElementById('bedding-controls');
+    if (!panel) return;
+    if (!this.selectedItem) {
+      panel.classList.add('hidden');
+      return;
+    }
+    const d = this.selectedItem.userData.itemData;
+    if (!this.isBed(d.catalogId)) {
+      panel.classList.add('hidden');
+      return;
+    }
+    panel.classList.remove('hidden');
+
+    const duvetColor = d.beddingColor || '#f8fafc';
+    const duvetInput = document.getElementById('bed-custom-duvet');
+    if (duvetInput) duvetInput.value = duvetColor.startsWith('#') ? duvetColor : '#' + duvetColor;
+    const duvetHex = document.getElementById('bedding-duvet-hex');
+    if (duvetHex) duvetHex.textContent = duvetColor;
+
+    const pillowColor = d.pillowColor || '#ffffff';
+    const pillowInput = document.getElementById('bed-custom-pillow');
+    if (pillowInput) pillowInput.value = pillowColor.startsWith('#') ? pillowColor : '#' + pillowColor;
+    const pillowHex = document.getElementById('bedding-pillow-hex');
+    if (pillowHex) pillowHex.textContent = pillowColor;
+  }
+
+  /**
+   * مزامنة لوحة التحكم الخاصة بأشكال ونقوش السجاد الأرضي
+   */
+  syncRugInspectorUI() {
+    const panel = document.getElementById('rug-controls');
+    if (!panel) return;
+    if (!this.selectedItem) {
+      panel.classList.add('hidden');
+      return;
+    }
+    const d = this.selectedItem.userData.itemData;
+    if (!this.isRug(d.catalogId)) {
+      panel.classList.add('hidden');
+      return;
+    }
+    panel.classList.remove('hidden');
+
+    const currentShape = d.rugShape || 'rect';
+    const currentPattern = d.rugPattern || 'persian';
+
+    // تحديث أزرار الشكل
+    document.querySelectorAll('.rug-shape-btn').forEach(btn => {
+      const shape = btn.getAttribute('data-rug-shape');
+      if (shape === currentShape) {
+        btn.className = 'rug-shape-btn py-1.5 rounded-xl text-[10px] font-bold bg-amber-600 text-white shadow-sm transition-all';
+      } else {
+        btn.className = 'rug-shape-btn py-1.5 rounded-xl text-[10px] font-bold bg-slate-800 text-slate-200 hover:text-white transition-all';
+      }
+    });
+
+    // شارة الشكل
+    const shapeBadge = document.getElementById('rug-shape-badge');
+    if (shapeBadge) {
+      const shapeNames = { rect: 'مستطيل', round: 'دائري', oval: 'بيضاوي', runner: 'ممشى' };
+      shapeBadge.textContent = shapeNames[currentShape] || currentShape;
+    }
+
+    // تحديث أزرار النقشة
+    document.querySelectorAll('.rug-pattern-btn').forEach(btn => {
+      const pattern = btn.getAttribute('data-rug-pattern');
+      const isColSpan = pattern === 'border';
+      const baseClass = isColSpan ? 'rug-pattern-btn py-1 px-1 rounded-xl text-[10px] font-bold col-span-2 transition-all' : 'rug-pattern-btn py-1 px-1 rounded-xl text-[10px] font-bold transition-all';
+      if (pattern === currentPattern) {
+        btn.className = `${baseClass} bg-amber-600 text-white shadow-sm`;
+      } else {
+        btn.className = `${baseClass} bg-slate-800 text-slate-200 hover:text-white`;
+      }
+    });
+
+    // ألوان السجادة
+    const primaryColor = d.color || '#991b1b';
+    const primaryInput = document.getElementById('rug-custom-primary');
+    if (primaryInput) primaryInput.value = primaryColor.startsWith('#') ? primaryColor : '#' + primaryColor;
+    const primaryHex = document.getElementById('rug-primary-hex');
+    if (primaryHex) primaryHex.textContent = primaryColor;
+
+    const accentColor = d.secondaryColor || '#f5ebe0';
+    const accentInput = document.getElementById('rug-custom-accent');
+    if (accentInput) accentInput.value = accentColor.startsWith('#') ? accentColor : '#' + accentColor;
+    const accentHex = document.getElementById('rug-accent-hex');
+    if (accentHex) accentHex.textContent = accentColor;
   }
 
   /**
@@ -1436,6 +1587,17 @@ class RoomStudioApp {
     setVal('room-height-input', r.height);
     setVal('room-floor-select', r.floorId);
     setVal('room-wall-select', r.wallId);
+
+    const floorCustom = document.getElementById('room-floor-custom');
+    if (floorCustom) {
+      const floorMatData = window.ROOM_MATERIALS.floors.find(f => f.id === r.floorId);
+      floorCustom.value = r.customFloorColor || floorMatData?.color || '#d8c5b0';
+    }
+    const wallCustom = document.getElementById('room-wall-custom');
+    if (wallCustom) {
+      const wallMatData = window.ROOM_MATERIALS.walls.find(w => w.id === r.wallId);
+      wallCustom.value = r.customWallColor || wallMatData?.color || '#f8fafc';
+    }
   }
 
   initUI() {
@@ -1480,7 +1642,7 @@ class RoomStudioApp {
       });
     }
 
-    // قوائم الأرضيات والحوائط
+    // قوائم الأرضيات والحوائط وتدرجات الألوان الحرة
     const floorSelect = document.getElementById('room-floor-select');
     if (floorSelect) {
       window.ROOM_MATERIALS.floors.forEach(f => {
@@ -1491,7 +1653,9 @@ class RoomStudioApp {
       });
       floorSelect.addEventListener('change', (e) => {
         this.activeRoom.floorId = e.target.value;
+        this.activeRoom.customFloorColor = null;
         this.buildAllRooms();
+        this.syncActiveRoomInputsUI();
         this.pushHistory('تغيير أرضية الغرفة');
       });
     }
@@ -1506,8 +1670,33 @@ class RoomStudioApp {
       });
       wallSelect.addEventListener('change', (e) => {
         this.activeRoom.wallId = e.target.value;
+        this.activeRoom.customWallColor = null;
         this.buildAllRooms();
+        this.syncActiveRoomInputsUI();
         this.pushHistory('تغيير لون الحائط');
+      });
+    }
+
+    // تدرجات ألوان موكيت وأرضيات ودهانات الحوائط الحرة
+    const floorCustom = document.getElementById('room-floor-custom');
+    if (floorCustom) {
+      floorCustom.addEventListener('input', (e) => {
+        this.activeRoom.customFloorColor = e.target.value;
+        this.buildAllRooms();
+      });
+      floorCustom.addEventListener('change', () => {
+        this.pushHistory('تغيير تدرج موكيت/أرضية الغرفة');
+      });
+    }
+
+    const wallCustom = document.getElementById('room-wall-custom');
+    if (wallCustom) {
+      wallCustom.addEventListener('input', (e) => {
+        this.activeRoom.customWallColor = e.target.value;
+        this.buildAllRooms();
+      });
+      wallCustom.addEventListener('change', () => {
+        this.pushHistory('تغيير دهان جدران الغرفة');
       });
     }
 
@@ -1595,23 +1784,58 @@ class RoomStudioApp {
       this.pushHistory('توسيط في الغرفة');
     });
 
-    // باليتة ألوان الأثاث
+    // باليتة ألوان وتدرجات الأثاث
     const paletteContainer = document.getElementById('item-color-palette');
     if (paletteContainer) {
       window.ROOM_MATERIALS.furnitureColors.forEach(c => {
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.title = c.name;
-        btn.className = 'w-7 h-7 rounded-full border-2 border-slate-600 hover:scale-110 transition-transform focus:outline-none focus:ring-2 focus:ring-sky-400';
+        btn.className = 'w-7 h-7 rounded-full border-2 border-slate-600 hover:scale-110 transition-transform focus:outline-none focus:ring-2 focus:ring-sky-400 shrink-0';
         btn.style.backgroundColor = c.hex;
         btn.addEventListener('click', () => {
           if (!this.selectedItem) return;
           this.selectedItem.userData.itemData.color = c.hex;
           this.rebuildItemVisuals(this.selectedItem);
           this.updateItemTransform(this.selectedItem);
-          this.pushHistory('تغيير لون قطعة');
+          this.syncInspectorValues();
+          this.pushHistory(`تغيير لون إلى ${c.name}`);
         });
         paletteContainer.appendChild(btn);
+      });
+    }
+
+    // اللون الحر للقطعة من عجلة الألوان
+    const itemColorCustom = document.getElementById('item-custom-color');
+    if (itemColorCustom) {
+      itemColorCustom.addEventListener('input', (e) => {
+        if (!this.selectedItem) return;
+        const d = this.selectedItem.userData.itemData;
+        d.color = e.target.value;
+        const hex = document.getElementById('item-color-hex');
+        if (hex) hex.textContent = e.target.value;
+        this.rebuildItemVisuals(this.selectedItem);
+        this.updateItemTransform(this.selectedItem);
+      });
+      itemColorCustom.addEventListener('change', () => {
+        this.pushHistory('تخصيص لون القطعة');
+      });
+    }
+
+    // اللون الثانوي المكمل (أرجل خشب، إطار، نقوش)
+    const itemSecondaryCustom = document.getElementById('item-secondary-color');
+    if (itemSecondaryCustom) {
+      itemSecondaryCustom.addEventListener('input', (e) => {
+        if (!this.selectedItem) return;
+        const d = this.selectedItem.userData.itemData;
+        d.secondaryColor = e.target.value;
+        const hex = document.getElementById('item-secondary-hex');
+        if (hex) hex.textContent = e.target.value;
+        this.rebuildItemVisuals(this.selectedItem);
+        this.updateItemTransform(this.selectedItem);
+      });
+      itemSecondaryCustom.addEventListener('change', () => {
+        this.pushHistory('تخصيص اللون الثانوي للقطعة');
       });
     }
 
@@ -1790,6 +2014,130 @@ class RoomStudioApp {
       });
     });
 
+    // عناصر التحكم في ألوان مفارش الأسرة والوسائد والشراشف
+    const applySelectedBeddingChange = (mutatorFn, historyLabel) => {
+      if (!this.selectedItem) return;
+      const d = this.selectedItem.userData.itemData;
+      if (!this.isBed(d.catalogId)) return;
+      mutatorFn(d);
+      this.rebuildItemVisuals(this.selectedItem);
+      this.updateItemTransform(this.selectedItem);
+      this.syncInspectorValues();
+      if (historyLabel) {
+        this.pushHistory(historyLabel);
+      }
+    };
+
+    const duvetPalette = document.getElementById('bedding-duvet-palette');
+    const pillowPalette = document.getElementById('bedding-pillow-palette');
+    if (duvetPalette && window.ROOM_MATERIALS.beddingColors) {
+      window.ROOM_MATERIALS.beddingColors.forEach(c => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.title = c.name;
+        btn.className = 'w-6 h-6 rounded-full border-2 border-slate-600 hover:scale-110 transition-transform focus:outline-none focus:ring-2 focus:ring-indigo-400 shrink-0';
+        btn.style.backgroundColor = c.hex;
+        btn.addEventListener('click', () => {
+          applySelectedBeddingChange(d => { d.beddingColor = c.hex; }, `تغيير لون المفرش إلى ${c.name}`);
+        });
+        duvetPalette.appendChild(btn);
+      });
+    }
+
+    if (pillowPalette && window.ROOM_MATERIALS.beddingColors) {
+      window.ROOM_MATERIALS.beddingColors.forEach(c => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.title = c.name;
+        btn.className = 'w-6 h-6 rounded-full border-2 border-slate-600 hover:scale-110 transition-transform focus:outline-none focus:ring-2 focus:ring-indigo-400 shrink-0';
+        btn.style.backgroundColor = c.hex;
+        btn.addEventListener('click', () => {
+          applySelectedBeddingChange(d => { d.pillowColor = c.hex; }, `تغيير لون الوسائد إلى ${c.name}`);
+        });
+        pillowPalette.appendChild(btn);
+      });
+    }
+
+    const bedDuvetCustom = document.getElementById('bed-custom-duvet');
+    if (bedDuvetCustom) {
+      bedDuvetCustom.addEventListener('input', (e) => {
+        applySelectedBeddingChange(d => { d.beddingColor = e.target.value; }, '');
+      });
+      bedDuvetCustom.addEventListener('change', () => {
+        this.pushHistory('تخصيص لون مفرش السرير');
+      });
+    }
+
+    const bedPillowCustom = document.getElementById('bed-custom-pillow');
+    if (bedPillowCustom) {
+      bedPillowCustom.addEventListener('input', (e) => {
+        applySelectedBeddingChange(d => { d.pillowColor = e.target.value; }, '');
+      });
+      bedPillowCustom.addEventListener('change', () => {
+        this.pushHistory('تخصيص لون وسائد السرير');
+      });
+    }
+
+    // عناصر التحكم في أشكال وأنماط وألوان السجاد الأرضي
+    const applySelectedRugChange = (mutatorFn, historyLabel) => {
+      if (!this.selectedItem) return;
+      const d = this.selectedItem.userData.itemData;
+      if (!this.isRug(d.catalogId)) return;
+      mutatorFn(d);
+      this.rebuildItemVisuals(this.selectedItem);
+      this.updateItemTransform(this.selectedItem);
+      this.syncInspectorValues();
+      if (historyLabel) {
+        this.pushHistory(historyLabel);
+      }
+    };
+
+    document.querySelectorAll('.rug-shape-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const shape = btn.getAttribute('data-rug-shape');
+        applySelectedRugChange(d => {
+          d.rugShape = shape;
+          if (shape === 'round') {
+            const side = Math.max(120, Math.min(d.width, d.depth));
+            d.width = side;
+            d.depth = side;
+          } else if (shape === 'runner') {
+            d.width = Math.min(d.width, 100);
+            d.depth = Math.max(d.depth, 240);
+          }
+        }, `تغيير شكل السجادة إلى ${shape}`);
+      });
+    });
+
+    document.querySelectorAll('.rug-pattern-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const pattern = btn.getAttribute('data-rug-pattern');
+        applySelectedRugChange(d => {
+          d.rugPattern = pattern;
+        }, `تغيير نمط السجادة إلى ${pattern}`);
+      });
+    });
+
+    const rugPrimaryCustom = document.getElementById('rug-custom-primary');
+    if (rugPrimaryCustom) {
+      rugPrimaryCustom.addEventListener('input', (e) => {
+        applySelectedRugChange(d => { d.color = e.target.value; }, '');
+      });
+      rugPrimaryCustom.addEventListener('change', () => {
+        this.pushHistory('تغيير اللون الأساسي للسجادة');
+      });
+    }
+
+    const rugAccentCustom = document.getElementById('rug-custom-accent');
+    if (rugAccentCustom) {
+      rugAccentCustom.addEventListener('input', (e) => {
+        applySelectedRugChange(d => { d.secondaryColor = e.target.value; }, '');
+      });
+      rugAccentCustom.addEventListener('change', () => {
+        this.pushHistory('تغيير لون زخرفة السجادة');
+      });
+    }
+
     document.getElementById('btn-toggle-light')?.addEventListener('click', () => {
       const next = this.settings.lightingMode === 'day' ? 'night' : 'day';
       this.setLightingMode(next);
@@ -1888,7 +2236,11 @@ class RoomStudioApp {
       openDirection: d.openDirection,
       hingeSide: d.hingeSide,
       openRatio: d.openRatio,
-      curtainOpenRatio: d.curtainOpenRatio
+      curtainOpenRatio: d.curtainOpenRatio,
+      beddingColor: d.beddingColor,
+      pillowColor: d.pillowColor,
+      rugShape: d.rugShape,
+      rugPattern: d.rugPattern
     }, true);
   }
 
@@ -2020,7 +2372,9 @@ class RoomStudioApp {
         offsetX: Number(r.offsetX) || 0,
         offsetZ: Number(r.offsetZ) || 0,
         floorId: r.floorId || 'oak_parquet',
-        wallId: r.wallId || 'warm_white'
+        wallId: r.wallId || 'warm_white',
+        customFloorColor: r.customFloorColor || null,
+        customWallColor: r.customWallColor || null
       }));
     } else if (data.room && typeof data.room === 'object') {
       const r = data.room;
@@ -2036,7 +2390,9 @@ class RoomStudioApp {
           offsetX: Number(r.offsetX) || 0,
           offsetZ: Number(r.offsetZ) || 0,
           floorId: r.floorId || 'oak_parquet',
-          wallId: r.wallId || 'warm_white'
+          wallId: r.wallId || 'warm_white',
+          customFloorColor: r.customFloorColor || null,
+          customWallColor: r.customWallColor || null
         }
       ];
 
