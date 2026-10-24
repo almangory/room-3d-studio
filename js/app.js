@@ -724,6 +724,156 @@ class RoomStudioApp {
     this.pushHistory('حذف غرفة');
   }
 
+  // ==================== تحريك ووزن الغرفة ومحاذاتها مع الغرف المجاورة ====================
+  moveActiveRoom(deltaX, deltaZ, moveContents = true, historyLabel = 'تحريك الغرفة') {
+    const r = this.activeRoom;
+    if (!r) return;
+    if (deltaX === 0 && deltaZ === 0) return;
+
+    // 1. تحديد العناصر التابعة للغرفة النشطة قبل نقلها
+    const roomItemsToMove = [];
+    if (moveContents) {
+      const halfW = r.width / 2;
+      const halfD = r.depth / 2;
+      const margin = 20;
+
+      this.items.forEach(g => {
+        const d = g.userData?.itemData;
+        if (!d) return;
+
+        // التحقق من وجود النقطة ضمن نطاق الغرفة الحالي
+        if (
+          d.x >= r.offsetX - halfW - margin &&
+          d.x <= r.offsetX + halfW + margin &&
+          d.z >= r.offsetZ - halfD - margin &&
+          d.z <= r.offsetZ + halfD + margin
+        ) {
+          // مقارنة المسافة المعيارية لمركز الغرف لضمان عدم سحب قطع الغرفة المجاورة
+          let bestRoom = r;
+          let minNormDistSq = Infinity;
+          for (const rm of this.rooms) {
+            const rw = rm.width / 2 + margin;
+            const rd = rm.depth / 2 + margin;
+            if (
+              d.x >= rm.offsetX - rw &&
+              d.x <= rm.offsetX + rw &&
+              d.z >= rm.offsetZ - rd &&
+              d.z <= rm.offsetZ + rd
+            ) {
+              const ndx = (d.x - rm.offsetX) / (rm.width / 2);
+              const ndz = (d.z - rm.offsetZ) / (rm.depth / 2);
+              const distSq = ndx * ndx + ndz * ndz;
+              if (distSq < minNormDistSq) {
+                minNormDistSq = distSq;
+                bestRoom = rm;
+              }
+            }
+          }
+
+          if (bestRoom.id === r.id) {
+            roomItemsToMove.push(g);
+          }
+        }
+      });
+    }
+
+    // 2. تحديث إحداثيات مركز الغرفة النشطة
+    r.offsetX = Math.round(r.offsetX + deltaX);
+    r.offsetZ = Math.round(r.offsetZ + deltaZ);
+
+    // 3. نقل قطع الأثاث والأبواب والنوافذ التابعة لها
+    if (moveContents && roomItemsToMove.length > 0) {
+      roomItemsToMove.forEach(g => {
+        const d = g.userData.itemData;
+        d.x = Math.round(d.x + deltaX);
+        d.z = Math.round(d.z + deltaZ);
+        this.updateItemTransform(g);
+      });
+    }
+
+    // 4. إعادة بناء مجسمات الغرف والجدران المشتركة والأرضيات والقياسات
+    this.buildAllRooms();
+    this.syncActiveRoomInputsUI();
+
+    if (this.selectedItem) {
+      this.syncInspectorValues();
+      this.drawClearanceLines(this.selectedItem);
+    }
+
+    // 5. حفظ السجل والتخزين التلقائي
+    if (historyLabel) {
+      this.pushHistory(historyLabel);
+    }
+    this.saveAutoProjectToStorage();
+  }
+
+  alignActiveRoomWith(targetRoomId, alignMode) {
+    const r1 = this.activeRoom;
+    if (!r1) return;
+
+    const r2 = this.rooms.find(rm => rm.id === targetRoomId);
+    if (!r2 || r2.id === r1.id) return;
+
+    const moveContents = document.getElementById('room-move-contents-toggle')?.checked ?? true;
+
+    let targetX = r1.offsetX;
+    let targetZ = r1.offsetZ;
+    let modeLabel = '';
+
+    const W1 = r1.width;
+    const D1 = r1.depth;
+    const W2 = r2.width;
+    const D2 = r2.depth;
+
+    switch (alignMode) {
+      case 'flush_north':
+        targetZ = r2.offsetZ - D2 / 2 + D1 / 2;
+        modeLabel = `وزن الحافة الخلفية مع ${r2.name}`;
+        break;
+      case 'flush_south':
+        targetZ = r2.offsetZ + D2 / 2 - D1 / 2;
+        modeLabel = `وزن الحافة الأمامية مع ${r2.name}`;
+        break;
+      case 'flush_east':
+        targetX = r2.offsetX + W2 / 2 - W1 / 2;
+        modeLabel = `وزن الحافة اليمنى مع ${r2.name}`;
+        break;
+      case 'flush_west':
+        targetX = r2.offsetX - W2 / 2 + W1 / 2;
+        modeLabel = `وزن الحافة اليسرى مع ${r2.name}`;
+        break;
+      case 'center_x':
+        targetX = r2.offsetX;
+        modeLabel = `توسيط أفقي مع ${r2.name}`;
+        break;
+      case 'attach_east':
+        targetX = r2.offsetX + W2 / 2 + W1 / 2;
+        modeLabel = `التصاق يمين ${r2.name}`;
+        break;
+      case 'attach_west':
+        targetX = r2.offsetX - W2 / 2 - W1 / 2;
+        modeLabel = `التصاق يسار ${r2.name}`;
+        break;
+      case 'attach_north':
+        targetZ = r2.offsetZ - D2 / 2 - D1 / 2;
+        modeLabel = `التصاق خلف ${r2.name}`;
+        break;
+      case 'attach_south':
+        targetZ = r2.offsetZ + D2 / 2 + D1 / 2;
+        modeLabel = `التصاق أمام ${r2.name}`;
+        break;
+      default:
+        return;
+    }
+
+    const deltaX = Math.round(targetX - r1.offsetX);
+    const deltaZ = Math.round(targetZ - r1.offsetZ);
+
+    if (deltaX !== 0 || deltaZ !== 0) {
+      this.moveActiveRoom(deltaX, deltaZ, moveContents, modeLabel);
+    }
+  }
+
   // ==================== فحص تصنيف ونوعية العناصر الخاصة ====================
   isDoorOrWindow(catalogId) {
     return ['door_wood', 'door_double', 'door_sliding_glass', 'window_glass'].includes(catalogId);
@@ -1785,6 +1935,8 @@ class RoomStudioApp {
     setVal('room-width-input', r.width);
     setVal('room-depth-input', r.depth);
     setVal('room-height-input', r.height);
+    setVal('room-pos-x', Math.round(r.offsetX || 0));
+    setVal('room-pos-z', Math.round(r.offsetZ || 0));
     setVal('room-floor-select', r.floorId);
     setVal('room-wall-select', r.wallId);
 
@@ -1797,6 +1949,43 @@ class RoomStudioApp {
     if (wallCustom) {
       const wallMatData = window.ROOM_MATERIALS.walls.find(w => w.id === r.wallId);
       wallCustom.value = r.customWallColor || wallMatData?.color || '#f8fafc';
+    }
+
+    // تحديث قائمة الغرف المرجعية للوزن والمحاذاة
+    const alignSection = document.getElementById('room-alignment-section');
+    const targetSelect = document.getElementById('room-align-target-select');
+    if (targetSelect) {
+      const otherRooms = this.rooms.filter(room => room.id !== r.id);
+      const prevVal = targetSelect.value;
+      targetSelect.innerHTML = '';
+
+      if (otherRooms.length === 0) {
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = 'لا توجد غرف مجاورة حالياً (أضف غرفة أولاً)';
+        targetSelect.appendChild(opt);
+        targetSelect.disabled = true;
+        if (alignSection) {
+          alignSection.classList.add('opacity-50', 'pointer-events-none');
+        }
+      } else {
+        targetSelect.disabled = false;
+        if (alignSection) {
+          alignSection.classList.remove('opacity-50', 'pointer-events-none');
+        }
+        otherRooms.forEach(rm => {
+          const opt = document.createElement('option');
+          opt.value = rm.id;
+          opt.textContent = `${rm.name} (${rm.width}×${rm.depth} سم)`;
+          targetSelect.appendChild(opt);
+        });
+
+        if (prevVal && otherRooms.some(rm => rm.id === prevVal)) {
+          targetSelect.value = prevVal;
+        } else {
+          targetSelect.value = otherRooms[0].id;
+        }
+      }
     }
   }
 
@@ -1915,6 +2104,51 @@ class RoomStudioApp {
     bindRoomDim('room-width-input', 'width', 150, 1500);
     bindRoomDim('room-depth-input', 'depth', 150, 1500);
     bindRoomDim('room-height-input', 'height', 220, 500);
+
+    // إحداثيات وموقع الغرفة النشطة
+    const posXInput = document.getElementById('room-pos-x');
+    if (posXInput) {
+      posXInput.addEventListener('change', () => {
+        const val = Number(posXInput.value);
+        if (Number.isNaN(val)) return;
+        const deltaX = Math.round(val - (this.activeRoom?.offsetX || 0));
+        const moveContents = document.getElementById('room-move-contents-toggle')?.checked ?? true;
+        this.moveActiveRoom(deltaX, 0, moveContents, 'تعديل موضع الغرفة X');
+      });
+    }
+
+    const posZInput = document.getElementById('room-pos-z');
+    if (posZInput) {
+      posZInput.addEventListener('change', () => {
+        const val = Number(posZInput.value);
+        if (Number.isNaN(val)) return;
+        const deltaZ = Math.round(val - (this.activeRoom?.offsetZ || 0));
+        const moveContents = document.getElementById('room-move-contents-toggle')?.checked ?? true;
+        this.moveActiveRoom(0, deltaZ, moveContents, 'تعديل موضع الغرفة Z');
+      });
+    }
+
+    // أزرار الإزاحة السريعة للغرفة (⬅️ ➡️ ⬆️ ⬇️)
+    document.querySelectorAll('.btn-nudge-room').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const rdx = Number(btn.dataset.rdx) || 0;
+        const rdz = Number(btn.dataset.rdz) || 0;
+        const moveContents = document.getElementById('room-move-contents-toggle')?.checked ?? true;
+        this.moveActiveRoom(rdx, rdz, moveContents, 'إزاحة سريعة للغرفة');
+      });
+    });
+
+    // أزرار وزن ومحاذاة الغرفة مع الغرف المجاورة
+    document.querySelectorAll('.btn-align-room').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const targetSelect = document.getElementById('room-align-target-select');
+        const targetRoomId = targetSelect?.value;
+        const alignMode = btn.dataset.alignMode;
+        if (targetRoomId && alignMode) {
+          this.alignActiveRoomWith(targetRoomId, alignMode);
+        }
+      });
+    });
 
     // حقول أبعاد وموقع قطعة الأثاث المحددة
     const bindItemDim = (id, prop, rebuild = true) => {

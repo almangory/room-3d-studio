@@ -218,6 +218,104 @@
             </div>
           </div>
 
+          <!-- إحداثيات موقع الغرفة وتحريكها مع أثاثها -->
+          <div class="bg-slate-950/80 p-2.5 rounded-xl border border-slate-800/90 space-y-1.5">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-bold text-sky-400 flex items-center gap-1">
+                <span>📍</span>
+                <span>موقع الغرفة في المخطط:</span>
+              </span>
+              <label class="text-[9px] text-slate-400 flex items-center gap-1 cursor-pointer">
+                <input id="room-move-contents-toggle" type="checkbox" checked class="rounded border-slate-700 accent-sky-500">
+                <span>نقل الأثاث معها</span>
+              </label>
+            </div>
+            <div class="grid grid-cols-2 gap-1.5">
+              <div>
+                <label for="room-pos-x" class="block text-[9px] text-slate-400 mb-0.5">إحداثي أفقي X (سم)</label>
+                <input id="room-pos-x" type="number" step="10" value="0" class="w-full bg-slate-900 text-white font-bold text-xs px-1.5 py-1 rounded border border-slate-700 text-center">
+              </div>
+              <div>
+                <label for="room-pos-z" class="block text-[9px] text-slate-400 mb-0.5">إحداثي رأسي Z (سم)</label>
+                <input id="room-pos-z" type="number" step="10" value="0" class="w-full bg-slate-900 text-white font-bold text-xs px-1.5 py-1 rounded border border-slate-700 text-center">
+              </div>
+            </div>
+
+            <!-- أزرار الإزاحة السريعة بالأسهم -->
+            <div class="flex items-center justify-between gap-1 pt-1.5 border-t border-slate-800/80">
+              <span class="text-[9px] text-slate-400">إزاحة سريعة:</span>
+              <div class="flex items-center gap-1">
+                <button type="button" data-rdx="-25" data-rdz="0" class="btn-nudge-room px-1.5 py-0.5 rounded bg-slate-900 hover:bg-sky-600 border border-slate-700 text-[10px] font-bold text-slate-200 hover:text-white transition-colors" title="إزاحة لليسار غرباً -25 سم">⬅️ 25-</button>
+                <button type="button" data-rdx="25" data-rdz="0" class="btn-nudge-room px-1.5 py-0.5 rounded bg-slate-900 hover:bg-sky-600 border border-slate-700 text-[10px] font-bold text-slate-200 hover:text-white transition-colors" title="إزاحة لليمين شرقاً +25 سم">➡️ 25+</button>
+                <button type="button" data-rdx="0" data-rdz="-25" class="btn-nudge-room px-1.5 py-0.5 rounded bg-slate-900 hover:bg-sky-600 border border-slate-700 text-[10px] font-bold text-slate-200 hover:text-white transition-colors" title="إزاحة للخلف شمالاً -25 سم">⬆️ 25-</button>
+                <button type="button" data-rdx="0" data-rdz="25" class="btn-nudge-room px-1.5 py-0.5 rounded bg-slate-900 hover:bg-sky-600 border border-slate-700 text-[10px] font-bold text-slate-200 hover:text-white transition-colors" title="إزاحة للأمام جنوباً +25 سم">⬇️ 25+</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- أدوات وزن ومحاذاة الغرفة مع الغرف المجاورة (Room Alignment & Flush "وزن الغرف") -->
+          <div id="room-alignment-section" class="bg-slate-950/90 p-2.5 rounded-2xl border border-emerald-500/40 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-emerald-400 flex items-center gap-1">
+                <span>⚖️</span>
+                <span>وزن ومحاذاة الغرفة</span>
+              </span>
+              <span class="text-[9px] text-slate-400 font-medium">استقامة الحواف</span>
+            </div>
+
+            <!-- اختيار الغرفة المرجعية للوزن معها -->
+            <div>
+              <label for="room-align-target-select" class="block text-[10px] text-slate-400 mb-1">اختر الغرفة المراد المحاذاة والوزن معها:</label>
+              <select id="room-align-target-select" class="w-full bg-slate-900 text-slate-100 text-xs font-bold px-2 py-1.5 rounded-lg border border-slate-700 focus:outline-none focus:ring-1 focus:ring-emerald-500"></select>
+            </div>
+
+            <!-- 1. أزرار وزن الحواف واستقامتها على نفس الخط (Flush Edges) -->
+            <div class="space-y-1">
+              <span class="block text-[9px] text-slate-400 font-semibold">وزن الحواف على استقامة واحدة متصلة:</span>
+              <div class="grid grid-cols-2 gap-1 text-[10px]">
+                <button type="button" data-align-mode="flush_north" class="btn-align-room py-1 px-1.5 rounded-lg bg-slate-900 hover:bg-emerald-600 text-slate-200 hover:text-white border border-slate-800 font-bold transition-all flex items-center justify-center gap-1" title="محاذاة ووزن الحائط الخلفي على نفس خط الحائط الخلفي للغرفة المجاورة">
+                  <span>⏶</span>
+                  <span>وزن الحافة الخلفية</span>
+                </button>
+                <button type="button" data-align-mode="flush_south" class="btn-align-room py-1 px-1.5 rounded-lg bg-slate-900 hover:bg-emerald-600 text-slate-200 hover:text-white border border-slate-800 font-bold transition-all flex items-center justify-center gap-1" title="محاذاة ووزن الحائط الأمامي على نفس خط الحائط الأمامي للغرفة المجاورة">
+                  <span>⏷</span>
+                  <span>وزن الحافة الأمامية</span>
+                </button>
+                <button type="button" data-align-mode="flush_east" class="btn-align-room py-1 px-1.5 rounded-lg bg-slate-900 hover:bg-emerald-600 text-slate-200 hover:text-white border border-slate-800 font-bold transition-all flex items-center justify-center gap-1" title="محاذاة ووزن الحائط الأيمن على نفس الخط">
+                  <span>⏵</span>
+                  <span>وزن الحافة اليمنى</span>
+                </button>
+                <button type="button" data-align-mode="flush_west" class="btn-align-room py-1 px-1.5 rounded-lg bg-slate-900 hover:bg-emerald-600 text-slate-200 hover:text-white border border-slate-800 font-bold transition-all flex items-center justify-center gap-1" title="محاذاة ووزن الحائط الأيسر على نفس الخط">
+                  <span>⏴</span>
+                  <span>وزن الحافة اليسرى</span>
+                </button>
+                <button type="button" data-align-mode="center_x" class="btn-align-room py-1 px-1.5 rounded-lg bg-slate-900 hover:bg-emerald-600 text-slate-200 hover:text-white border border-slate-800 font-bold transition-all flex items-center justify-center gap-1 col-span-2" title="توسيط الغرفة أفقياً مع الغرفة المحددة">
+                  <span>🎯</span>
+                  <span>توسيط أفقي مع الغرفة</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- 2. أزرار الالتصاق والملاصقة المباشرة (Snap & Attach) -->
+            <div class="space-y-1 pt-1.5 border-t border-slate-800/80">
+              <span class="block text-[9px] text-slate-400 font-semibold">التصاق وملاصقة تامة بدون فواصل:</span>
+              <div class="grid grid-cols-4 gap-1 text-[10px]">
+                <button type="button" data-align-mode="attach_east" class="btn-align-room py-1 px-1 rounded-lg bg-slate-900 hover:bg-sky-600 text-slate-200 hover:text-white border border-slate-800 font-bold transition-all" title="التصاق بالجانب الأيمن للغرفة المجاورة">
+                  يمين 🧲
+                </button>
+                <button type="button" data-align-mode="attach_west" class="btn-align-room py-1 px-1 rounded-lg bg-slate-900 hover:bg-sky-600 text-slate-200 hover:text-white border border-slate-800 font-bold transition-all" title="التصاق بالجانب الأيسر للغرفة المجاورة">
+                  يسار 🧲
+                </button>
+                <button type="button" data-align-mode="attach_north" class="btn-align-room py-1 px-1 rounded-lg bg-slate-900 hover:bg-sky-600 text-slate-200 hover:text-white border border-slate-800 font-bold transition-all" title="التصاق بالجانب الخلفي للغرفة المجاورة">
+                  خلف 🧲
+                </button>
+                <button type="button" data-align-mode="attach_south" class="btn-align-room py-1 px-1 rounded-lg bg-slate-900 hover:bg-sky-600 text-slate-200 hover:text-white border border-slate-800 font-bold transition-all" title="التصاق بالجانب الأمامي للغرفة المجاورة">
+                  أمام 🧲
+                </button>
+              </div>
+            </div>
+          </div>
+
           <!-- اختيار خامة الأرضية ولون الحوائط للغرفة المحددة -->
           <div class="space-y-1.5">
             <div class="grid grid-cols-2 gap-2">
