@@ -367,6 +367,114 @@ window.ProceduralBuilder = {
         break;
       }
 
+      case 'tv_wall_55':
+      case 'tv_wall_65':
+      case 'tv_wall_75':
+      case 'tv_wall_85':
+      case 'tv_frame_art': {
+        const isArtFrame = type === 'tv_frame_art';
+        const frameMat = isArtFrame
+          ? new THREE.MeshStandardMaterial({ color: data.color || '#c89d6c', roughness: 0.35, metalness: 0.1 })
+          : new THREE.MeshStandardMaterial({ color: '#0f172a', roughness: 0.25, metalness: 0.85 });
+
+        // 1. الإطار الخارجي فائق النحافة أو البرواز الخشبي الفني
+        const borderThick = isArtFrame ? 0.045 : 0.012;
+        addBox(W, H, D * 0.45, 0, H / 2, 0, frameMat);
+
+        // 2. شاشة OLED سوداء لامعة مع طبقة زجاجية عاكسة
+        const screenMat = new THREE.MeshStandardMaterial({
+          color: isArtFrame ? '#1e293b' : '#070a12',
+          roughness: 0.08,
+          metalness: 0.85
+        });
+        const screenW = W - borderThick * 2;
+        const screenH = H - borderThick * 2;
+        addBox(screenW, screenH, 0.01, 0, H / 2, D * 0.225 + 0.005, screenMat);
+
+        // إذا كانت شاشة The Frame، نضيف لوحة فنية ديكورية داخل الشاشة
+        if (isArtFrame) {
+          const artCanvasMat = new THREE.MeshStandardMaterial({
+            color: '#fef08a',
+            roughness: 0.8,
+            metalness: 0.05
+          });
+          addBox(screenW * 0.94, screenH * 0.94, 0.008, 0, H / 2, D * 0.225 + 0.01, artCanvasMat);
+          const artShapeMat = new THREE.MeshStandardMaterial({ color: '#065f46', roughness: 0.6 });
+          addBox(screenW * 0.5, screenH * 0.4, 0.005, -screenW * 0.15, H / 2 + screenH * 0.1, D * 0.225 + 0.015, artShapeMat);
+          const artSunMat = new THREE.MeshStandardMaterial({ color: '#ea580c', roughness: 0.6 });
+          addCyl(screenH * 0.18, screenH * 0.18, 0.005, screenW * 0.22, H / 2 + screenH * 0.15, D * 0.225 + 0.016, artSunMat);
+        }
+
+        // 3. حامل التعليق الجداري الفولاذي من الخلف (VESA Wall Mount Bracket)
+        const bracketMat = new THREE.MeshStandardMaterial({ color: '#1e293b', roughness: 0.5, metalness: 0.8 });
+        addBox(W * 0.35, H * 0.45, D * 0.55, 0, H / 2, -D * 0.275, bracketMat);
+        addBox(W * 0.45, 0.025, D * 0.56, 0, H / 2 + 0.1, -D * 0.275, chromeMat);
+        addBox(W * 0.45, 0.025, D * 0.56, 0, H / 2 - 0.1, -D * 0.275, chromeMat);
+
+        // 4. إضاءة خلفية محيطية خافتة على الجدار (Ambilight Backglow)
+        const ambiColor = data.tvAmbilight || (isArtFrame ? '#ffe4c4' : '#38bdf8');
+        if (ambiColor && ambiColor !== 'transparent') {
+          const ambilightMat = new THREE.MeshBasicMaterial({
+            color: ambiColor,
+            transparent: true,
+            opacity: 0.55
+          });
+          addBox(W * 0.96, H * 0.96, 0.005, 0, H / 2, -D * 0.22, ambilightMat);
+        }
+
+        // 5. شريط الصوت السفلي الرفيع ولمبة الاستعداد الحمراء (Standby LED)
+        if (!isArtFrame) {
+          addBox(W * 0.5, 0.016, 0.02, 0, 0.008, D * 0.22, darkMat);
+          const standbyMat = new THREE.MeshBasicMaterial({ color: '#ef4444' });
+          addBox(0.016, 0.008, 0.004, 0, 0.006, D * 0.22 + 0.012, standbyMat);
+        }
+        break;
+      }
+
+      case 'ac_split':
+      case 'ac_split_small': {
+        const bodyMat = new THREE.MeshStandardMaterial({
+          color: data.color || '#f8fafc',
+          roughness: 0.25,
+          metalness: 0.1
+        });
+        const louverMat = new THREE.MeshStandardMaterial({
+          color: '#e2e8f0',
+          roughness: 0.3,
+          metalness: 0.5
+        });
+
+        // 1. الهيكل الانسيابي العصري لوحدة المكيف الجداري
+        addBox(W, H * 0.88, D * 0.85, 0, H * 0.44, 0, bodyMat);
+
+        // 2. شبكة سحب الهواء العلوية بشرائح تهوية دقيقة
+        addBox(W * 0.94, 0.025, D * 0.55, 0, H * 0.88, -D * 0.12, darkMat);
+        for (let i = -3; i <= 3; i++) {
+          addBox(W * 0.92, 0.01, 0.015, 0, H * 0.89, -D * 0.12 + (i * 0.03), chromeMat);
+        }
+
+        // 3. الغطاء الأمامي الانسيابي الأملس
+        addBox(W * 0.98, H * 0.74, 0.035, 0, H * 0.5, D * 0.42, bodyMat);
+
+        // 4. ريشة توزيع وتوجيه الهواء السفلية المتحركة (Motorized Air Discharge Louver)
+        addBox(W * 0.92, 0.028, D * 0.42, 0, H * 0.06, D * 0.22, louverMat);
+
+        // 5. شاشة العرض الرقمية لدرجة الحرارة (Digital LED Display - e.g. 18°C)
+        const ledColor = data.acMode === 'fan' ? '#a3e635' : (data.acMode === 'sleep' ? '#c084fc' : '#38bdf8');
+        const ledMat = new THREE.MeshBasicMaterial({ color: ledColor });
+        addBox(0.12, 0.045, 0.01, W * 0.32, H * 0.52, D * 0.435 + 0.005, ledMat);
+
+        // لمبة مؤشر التشغيل والتبريد الخضراء (Cooling Eco LED)
+        const ecoMat = new THREE.MeshBasicMaterial({ color: '#22c55e' });
+        addBox(0.016, 0.016, 0.01, W * 0.32 + 0.08, H * 0.52, D * 0.435 + 0.005, ecoMat);
+
+        // 6. لوح التثبيت الجداري الخلفي ومخرج أنابيب الفريون والتصريف
+        const backPlateMat = new THREE.MeshStandardMaterial({ color: '#1e293b', roughness: 0.6, metalness: 0.7 });
+        addBox(W * 0.8, H * 0.65, 0.02, 0, H * 0.48, -D * 0.43, backPlateMat);
+        addCyl(0.018, 0.018, 0.14, -W * 0.42, H * 0.08, -D * 0.22, chromeMat);
+        break;
+      }
+
       case 'fireplace_modern': {
         addBox(W, H, D, 0, H / 2, 0, mainMat);
         addBox(W + 0.08, 0.08, D + 0.06, 0, H - 0.04, 0, whiteMat);

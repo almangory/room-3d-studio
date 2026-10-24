@@ -147,6 +147,48 @@ window.FURNITURE_CATALOG = [
     color: '#5c3a21', secondaryColor: '#0f172a', icon: '📺'
   },
   {
+    id: 'tv_wall_55', name: 'تلفزيون حائط ذكي 55 بوصة (4K)', category: 'living', categories: ['living', 'bedroom'],
+    width: 123, depth: 7, height: 71, elevation: 115,
+    color: '#0f172a', secondaryColor: '#38bdf8', icon: '📺',
+    tvSize: 55, tvAmbilight: '#38bdf8'
+  },
+  {
+    id: 'tv_wall_65', name: 'تلفزيون حائط ذكي 65 بوصة (QLED)', category: 'living', categories: ['living', 'bedroom'],
+    width: 145, depth: 7, height: 83, elevation: 110,
+    color: '#0f172a', secondaryColor: '#38bdf8', icon: '📺',
+    tvSize: 65, tvAmbilight: '#38bdf8'
+  },
+  {
+    id: 'tv_wall_75', name: 'تلفزيون حائط سينمائي 75 بوصة (8K)', category: 'living', categories: ['living'],
+    width: 168, depth: 8, height: 96, elevation: 105,
+    color: '#0f172a', secondaryColor: '#38bdf8', icon: '📺',
+    tvSize: 75, tvAmbilight: '#38bdf8'
+  },
+  {
+    id: 'tv_wall_85', name: 'شاشة حائط عملاقة 85 بوصة (Cinema)', category: 'living', categories: ['living'],
+    width: 190, depth: 8, height: 108, elevation: 100,
+    color: '#0f172a', secondaryColor: '#38bdf8', icon: '📺',
+    tvSize: 85, tvAmbilight: '#38bdf8'
+  },
+  {
+    id: 'tv_frame_art', name: 'شاشة حائط The Frame 65" (إطار فني)', category: 'decor', categories: ['decor', 'living', 'bedroom'],
+    width: 145, depth: 5, height: 84, elevation: 110,
+    color: '#c89d6c', secondaryColor: '#1e293b', icon: '🖼️',
+    tvSize: 65, tvAmbilight: '#ffe4c4'
+  },
+  {
+    id: 'ac_split', name: 'مكيف حائط فريون سبليت 24 ألف وحدة', category: 'living', categories: ['living', 'bedroom', 'arch'],
+    width: 105, depth: 25, height: 32, elevation: 230,
+    color: '#f8fafc', secondaryColor: '#38bdf8', icon: '❄️',
+    acTemp: 18, acMode: 'cool'
+  },
+  {
+    id: 'ac_split_small', name: 'مكيف حائط فريون سبليت 18 ألف وحدة', category: 'bedroom', categories: ['bedroom', 'living', 'arch'],
+    width: 88, depth: 23, height: 29, elevation: 230,
+    color: '#f8fafc', secondaryColor: '#38bdf8', icon: '❄️',
+    acTemp: 20, acMode: 'cool'
+  },
+  {
     id: 'fireplace_modern', name: 'مدفأة ديكور حجرية', category: 'living',
     width: 140, depth: 38, height: 115, elevation: 0,
     color: '#334155', secondaryColor: '#f97316', icon: '🔥'
@@ -328,11 +370,6 @@ window.FURNITURE_CATALOG = [
     id: 'stairs_straight', name: 'سلم داخلي للطابق العلوي', category: 'arch',
     width: 105, depth: 280, height: 270, elevation: 0,
     color: '#a97142', secondaryColor: '#1e293b', icon: '🪜'
-  },
-  {
-    id: 'ac_split', name: 'مكيف هواء سبليت حائطي', category: 'arch',
-    width: 105, depth: 26, height: 32, elevation: 225,
-    color: '#f8fafc', secondaryColor: '#1e293b', icon: '❄️'
   },
 
   // ================= الستائر وإكسسوارات النوافذ (Curtains & Window Treatments) =================

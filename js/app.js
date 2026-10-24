@@ -903,6 +903,14 @@ class RoomStudioApp {
     return ['rug_persian', 'rug_large', 'rug_round_boho', 'rug_oval_luxury', 'rug_runner_corridor'].includes(catalogId);
   }
 
+  isWallTV(catalogId) {
+    return ['tv_wall_55', 'tv_wall_65', 'tv_wall_75', 'tv_wall_85', 'tv_frame_art'].includes(catalogId);
+  }
+
+  isAC(catalogId) {
+    return ['ac_split', 'ac_split_small'].includes(catalogId);
+  }
+
   // ==================== إضافة وتحديث قطع الأثاث ====================
   addFurnitureItem(catalogId, customProps = {}, recordHistory = true) {
     const catItem = window.FURNITURE_CATALOG.find(item => item.id === catalogId);
@@ -913,6 +921,8 @@ class RoomStudioApp {
     const isCurtainItem = this.isCurtain(catItem.id);
     const isBedItem = this.isBed(catItem.id);
     const isRugItem = this.isRug(catItem.id);
+    const isWallTVItem = this.isWallTV(catItem.id);
+    const isACItem = this.isAC(catItem.id);
     const defaultOpenType = (catItem.id === 'door_sliding_glass' || catItem.id === 'window_glass') ? 'sliding' : 'hinged';
     const defaultHingeSide = catItem.id === 'door_double' ? 'both' : 'right';
 
@@ -952,6 +962,14 @@ class RoomStudioApp {
       ...(isRugItem ? {
         rugShape: customProps.rugShape || catItem.rugShape || defaultRugShape,
         rugPattern: customProps.rugPattern || catItem.rugPattern || defaultRugPattern
+      } : {}),
+      ...(isWallTVItem ? {
+        tvSize: customProps.tvSize || catItem.tvSize || 65,
+        tvAmbilight: customProps.tvAmbilight || catItem.tvAmbilight || '#38bdf8'
+      } : {}),
+      ...(isACItem ? {
+        acTemp: customProps.acTemp || catItem.acTemp || 18,
+        acMode: customProps.acMode || catItem.acMode || 'cool'
       } : {})
     };
 
@@ -1372,6 +1390,8 @@ class RoomStudioApp {
     this.syncCurtainInspectorUI();
     this.syncBeddingInspectorUI();
     this.syncRugInspectorUI();
+    this.syncWallTVInspectorUI();
+    this.syncACInspectorUI();
     this.syncContextualHarmonySuggestions();
   }
 
@@ -1705,6 +1725,124 @@ class RoomStudioApp {
         alertEl.innerHTML = '<span>✅</span><span>مسار الفتح خالٍ ولا يصطدم بأي أثاث</span>';
       }
     }
+  }
+
+  /**
+   * مزامنة لوحة التحكم الخاصة بشاشات وتلفزيونات الحائط ومقاساتها القياسية
+   */
+  syncWallTVInspectorUI() {
+    const panel = document.getElementById('tv-wall-controls');
+    if (!panel) return;
+
+    if (!this.selectedItem) {
+      panel.classList.add('hidden');
+      return;
+    }
+    const d = this.selectedItem.userData.itemData;
+    if (!this.isWallTV(d.catalogId)) {
+      panel.classList.add('hidden');
+      return;
+    }
+    panel.classList.remove('hidden');
+
+    const currentSize = d.tvSize || 65;
+    const badgeEl = document.getElementById('tv-size-badge');
+    if (badgeEl) {
+      badgeEl.textContent = `${currentSize} بوصة`;
+    }
+
+    // تحديث أزرار مقاس الشاشة
+    document.querySelectorAll('.tv-size-btn').forEach(btn => {
+      const sz = Number(btn.dataset.tvSize);
+      if (sz === currentSize) {
+        btn.className = 'tv-size-btn py-1.5 rounded-xl text-[10px] font-bold bg-sky-600 text-white shadow-sm transition-all text-center';
+      } else {
+        btn.className = 'tv-size-btn py-1.5 rounded-xl text-[10px] font-bold bg-slate-800 text-slate-200 hover:text-white transition-all text-center';
+      }
+    });
+
+    // تحديث أزرار ارتفاع التعليق
+    const currentElev = Math.round(d.elevation);
+    document.querySelectorAll('.tv-elev-btn').forEach(btn => {
+      const elev = Number(btn.dataset.tvElev);
+      const isClose = Math.abs(currentElev - elev) <= 5;
+      if (isClose) {
+        btn.className = 'tv-elev-btn py-1 px-1 rounded-lg bg-slate-900 text-sky-400 border border-sky-500/50 font-bold transition-colors';
+      } else {
+        btn.className = 'tv-elev-btn py-1 px-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 font-semibold transition-colors';
+      }
+    });
+
+    // تحديث أزرار الإضاءة الخلفية Ambilight
+    const currentAmbi = (d.tvAmbilight || '#38bdf8').toLowerCase();
+    document.querySelectorAll('.tv-ambi-btn').forEach(btn => {
+      const color = (btn.dataset.tvAmbi || '').toLowerCase();
+      if (color === currentAmbi || (color === 'transparent' && currentAmbi === 'transparent')) {
+        btn.classList.add('ring-2', 'ring-sky-400', 'scale-110');
+      } else {
+        btn.classList.remove('ring-2', 'ring-sky-400', 'scale-110');
+      }
+    });
+  }
+
+  /**
+   * مزامنة لوحة التحكم الخاصة بمكيف الحائط الفريون ودرجة الحرارة والأوضاع
+   */
+  syncACInspectorUI() {
+    const panel = document.getElementById('ac-controls');
+    if (!panel) return;
+
+    if (!this.selectedItem) {
+      panel.classList.add('hidden');
+      return;
+    }
+    const d = this.selectedItem.userData.itemData;
+    if (!this.isAC(d.catalogId)) {
+      panel.classList.add('hidden');
+      return;
+    }
+    panel.classList.remove('hidden');
+
+    const currentTemp = d.acTemp || 18;
+    const currentMode = d.acMode || 'cool';
+    const modeIcons = { cool: '❄️', fan: '🍃', sleep: '🌙' };
+
+    const badgeEl = document.getElementById('ac-temp-badge');
+    if (badgeEl) {
+      badgeEl.textContent = `${currentTemp}°C ${modeIcons[currentMode] || '❄️'}`;
+    }
+
+    // أزرار درجة الحرارة
+    document.querySelectorAll('.ac-temp-btn').forEach(btn => {
+      const temp = Number(btn.dataset.acTemp);
+      if (temp === currentTemp) {
+        btn.className = 'ac-temp-btn py-1.5 rounded-xl bg-cyan-600 text-white font-bold transition-all text-center';
+      } else {
+        btn.className = 'ac-temp-btn py-1.5 rounded-xl bg-slate-800 text-slate-200 hover:bg-cyan-600 hover:text-white transition-all text-center';
+      }
+    });
+
+    // أزرار وضع التشغيل
+    document.querySelectorAll('.ac-mode-btn').forEach(btn => {
+      const mode = btn.dataset.acMode;
+      if (mode === currentMode) {
+        btn.className = 'ac-mode-btn py-1 px-1 rounded-lg bg-cyan-600 text-white font-bold transition-colors';
+      } else {
+        btn.className = 'ac-mode-btn py-1 px-1 rounded-lg bg-slate-900 text-slate-300 border border-slate-800 font-semibold transition-colors';
+      }
+    });
+
+    // أزرار ارتفاع التعليق
+    const currentElev = Math.round(d.elevation);
+    document.querySelectorAll('.ac-elev-btn').forEach(btn => {
+      const elev = Number(btn.dataset.acElev);
+      const isClose = Math.abs(currentElev - elev) <= 5;
+      if (isClose) {
+        btn.className = 'ac-elev-btn py-1 px-1 rounded-lg bg-slate-900 text-cyan-400 border border-cyan-500/50 font-bold transition-colors';
+      } else {
+        btn.className = 'ac-elev-btn py-1 px-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 font-semibold transition-colors';
+      }
+    });
   }
 
   updateRoomStatsUI() {
@@ -2678,6 +2816,102 @@ class RoomStudioApp {
       });
     }
 
+    // عناصر التحكم في شاشات وتلفزيونات الحائط (المقاس، الارتفاع، الإضاءة المحيطية)
+    const tvDims = {
+      55: { w: 123, h: 71, d: 7 },
+      65: { w: 145, h: 83, d: 7 },
+      75: { w: 168, h: 96, d: 8 },
+      85: { w: 190, h: 108, d: 8 }
+    };
+
+    const applySelectedWallTVChange = (mutatorFn, historyLabel) => {
+      if (!this.selectedItem) return;
+      const d = this.selectedItem.userData.itemData;
+      if (!this.isWallTV(d.catalogId)) return;
+      mutatorFn(d);
+      this.rebuildItemVisuals(this.selectedItem);
+      this.updateItemTransform(this.selectedItem);
+      this.syncInspectorValues();
+      if (historyLabel) {
+        this.pushHistory(historyLabel);
+      }
+    };
+
+    document.querySelectorAll('.tv-size-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const sz = Number(btn.dataset.tvSize);
+        const dims = tvDims[sz] || tvDims[65];
+        applySelectedWallTVChange(d => {
+          d.tvSize = sz;
+          d.width = dims.w;
+          d.height = dims.h;
+          d.depth = dims.d;
+          if (d.name) {
+            d.name = d.name.replace(/\d+\s*بوصة/, `${sz} بوصة`);
+          }
+        }, `تغيير مقاس الشاشة إلى ${sz} بوصة`);
+      });
+    });
+
+    document.querySelectorAll('.tv-elev-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const elev = Number(btn.dataset.tvElev);
+        applySelectedWallTVChange(d => {
+          d.elevation = elev;
+        }, `تعديل ارتفاع تعليق الشاشة إلى ${elev} سم`);
+      });
+    });
+
+    document.querySelectorAll('.tv-ambi-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const ambi = btn.dataset.tvAmbi;
+        applySelectedWallTVChange(d => {
+          d.tvAmbilight = ambi;
+        }, ambi === 'transparent' ? 'إيقاف إضاءة خلفية الشاشة' : 'تغيير إضاءة خلفية الشاشة');
+      });
+    });
+
+    // عناصر التحكم في مكيف الحائط الفريون (درجة الحرارة، وضع التبريد، الارتفاع)
+    const applySelectedACChange = (mutatorFn, historyLabel) => {
+      if (!this.selectedItem) return;
+      const d = this.selectedItem.userData.itemData;
+      if (!this.isAC(d.catalogId)) return;
+      mutatorFn(d);
+      this.rebuildItemVisuals(this.selectedItem);
+      this.updateItemTransform(this.selectedItem);
+      this.syncInspectorValues();
+      if (historyLabel) {
+        this.pushHistory(historyLabel);
+      }
+    };
+
+    document.querySelectorAll('.ac-temp-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const temp = Number(btn.dataset.acTemp);
+        applySelectedACChange(d => {
+          d.acTemp = temp;
+        }, `ضبط حرارة المكيف على ${temp}°C`);
+      });
+    });
+
+    document.querySelectorAll('.ac-mode-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const mode = btn.dataset.acMode;
+        applySelectedACChange(d => {
+          d.acMode = mode;
+        }, `تغيير وضع تبريد المكيف إلى ${mode === 'cool' ? 'تبريد فريون' : mode === 'fan' ? 'مروحة' : 'هادئ'}`);
+      });
+    });
+
+    document.querySelectorAll('.ac-elev-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const elev = Number(btn.dataset.acElev);
+        applySelectedACChange(d => {
+          d.elevation = elev;
+        }, `تعديل ارتفاع تركيب المكيف إلى ${elev} سم`);
+      });
+    });
+
     document.getElementById('btn-toggle-light')?.addEventListener('click', () => {
       const next = this.settings.lightingMode === 'day' ? 'night' : 'day';
       this.setLightingMode(next);
@@ -3080,12 +3314,13 @@ class RoomStudioApp {
     const q = (this.catalogSearchQuery || '').trim().toLowerCase();
     let filtered = category === 'all'
       ? window.FURNITURE_CATALOG
-      : window.FURNITURE_CATALOG.filter(i => i.category === category);
+      : window.FURNITURE_CATALOG.filter(i => i.category === category || (Array.isArray(i.categories) && i.categories.includes(category)));
 
     if (q) {
       filtered = filtered.filter(i => 
         i.name.toLowerCase().includes(q) || 
-        (i.category && i.category.toLowerCase().includes(q))
+        (i.category && i.category.toLowerCase().includes(q)) ||
+        (Array.isArray(i.categories) && i.categories.some(c => c.toLowerCase().includes(q)))
       );
     }
 
