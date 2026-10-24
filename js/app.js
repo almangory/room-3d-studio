@@ -274,11 +274,12 @@ class RoomStudioApp {
 
     this.controls = new THREE.OrbitControls(this.activeCamera, this.renderer.domElement);
     this.controls.enableDamping = true;
-    this.controls.dampingFactor = 0.08;
-    this.controls.maxPolarAngle = Math.PI / 2 - 0.03;
-    this.controls.minDistance = 1.5;
-    this.controls.maxDistance = 35;
-    this.controls.target.set(0, 0.5, 0);
+    this.controls.dampingFactor = 0.06;
+    this.controls.screenSpacePanning = true;
+    this.controls.maxPolarAngle = Math.PI / 2 + 0.12;
+    this.controls.minDistance = 0.25;
+    this.controls.maxDistance = 55;
+    this.controls.target.set(0, 0.4, 0);
 
     this.scene.add(this.roomGroup);
     this.scene.add(this.furnitureGroup);
@@ -780,6 +781,17 @@ class RoomStudioApp {
     // 2. تحديث إحداثيات مركز الغرفة النشطة
     r.offsetX = Math.round(r.offsetX + deltaX);
     r.offsetZ = Math.round(r.offsetZ + deltaZ);
+
+    // تحريك بؤرة الكاميرا بالتزامن مع الغرفة لمنع انحراف المشهد أثناء التحريك
+    if (this.controls && this.activeRoomId === r.id) {
+      this.controls.target.x += deltaX / 100;
+      this.controls.target.z += deltaZ / 100;
+      if (this.perspCamera) {
+        this.perspCamera.position.x += deltaX / 100;
+        this.perspCamera.position.z += deltaZ / 100;
+      }
+      this.controls.update();
+    }
 
     // 3. نقل قطع الأثاث والأبواب والنوافذ التابعة لها
     if (moveContents && roomItemsToMove.length > 0) {
@@ -1919,6 +1931,7 @@ class RoomStudioApp {
         this.buildAllRooms();
         this.renderRoomsTabsUI();
         this.syncActiveRoomInputsUI();
+        this.focusOnActiveRoom(true, false);
       });
       listEl.appendChild(btn);
     });
@@ -1992,6 +2005,99 @@ class RoomStudioApp {
   initUI() {
     this.renderCatalogList('all');
     this.renderRoomsTabsUI();
+
+    // 1. تبديل أقسام اللوحة الجانبية (الغرف / الكتالوج / عرض شامل)
+    const btnTabRooms = document.getElementById('btn-sidebar-tab-rooms');
+    const btnTabCatalog = document.getElementById('btn-sidebar-tab-catalog');
+    const btnTabAll = document.getElementById('btn-sidebar-tab-all');
+    const secRooms = document.getElementById('sidebar-section-rooms');
+    const secCatalog = document.getElementById('sidebar-section-catalog');
+
+    const setSidebarMode = (mode) => {
+      [btnTabRooms, btnTabCatalog, btnTabAll].forEach(b => {
+        b?.classList.remove('bg-sky-600', 'text-white', 'shadow');
+        b?.classList.add('text-slate-400');
+      });
+
+      if (mode === 'rooms') {
+        btnTabRooms?.classList.add('bg-sky-600', 'text-white', 'shadow');
+        btnTabRooms?.classList.remove('text-slate-400');
+        secRooms?.classList.remove('hidden');
+        secCatalog?.classList.add('hidden');
+      } else if (mode === 'catalog') {
+        btnTabCatalog?.classList.add('bg-sky-600', 'text-white', 'shadow');
+        btnTabCatalog?.classList.remove('text-slate-400');
+        secRooms?.classList.add('hidden');
+        secCatalog?.classList.remove('hidden');
+      } else if (mode === 'all') {
+        btnTabAll?.classList.add('bg-sky-600', 'text-white', 'shadow');
+        btnTabAll?.classList.remove('text-slate-400');
+        secRooms?.classList.remove('hidden');
+        secCatalog?.classList.remove('hidden');
+      }
+    };
+
+    btnTabRooms?.addEventListener('click', () => setSidebarMode('rooms'));
+    btnTabCatalog?.addEventListener('click', () => setSidebarMode('catalog'));
+    btnTabAll?.addEventListener('click', () => setSidebarMode('all'));
+
+    // 2. تفعيل الأكورديون القابل للطي والفرد للأقسام
+    document.querySelectorAll('[data-accordion-toggle]').forEach(header => {
+      header.addEventListener('click', () => {
+        const targetId = header.getAttribute('data-accordion-toggle');
+        const content = document.getElementById(targetId);
+        const arrow = header.querySelector('.accordion-arrow');
+        if (content) {
+          const isHidden = content.classList.toggle('hidden');
+          if (arrow) {
+            arrow.textContent = isHidden ? '◀' : '▼';
+          }
+        }
+      });
+    });
+
+    // 3. بحث سريع داخل كتالوج الأثاث
+    const catalogSearchInput = document.getElementById('catalog-search');
+    if (catalogSearchInput) {
+      catalogSearchInput.addEventListener('input', (e) => {
+        this.catalogSearchQuery = e.target.value;
+        this.renderCatalogList(this.currentCatalogCategory || 'all');
+      });
+    }
+
+    // 4. أزرار شريط أدوات الكاميرا العائم أسفل شاشة العرض
+    document.getElementById('btn-dock-focus-room')?.addEventListener('click', () => {
+      this.focusOnActiveRoom(true, false);
+    });
+
+    document.getElementById('btn-dock-low-angle')?.addEventListener('click', () => {
+      this.focusOnActiveRoom(true, true);
+    });
+
+    document.getElementById('btn-dock-fit-house')?.addEventListener('click', () => {
+      this.fitAllRooms(true);
+    });
+
+    document.getElementById('btn-dock-zoom-in')?.addEventListener('click', () => {
+      const dir = new THREE.Vector3().subVectors(this.controls.target, this.perspCamera.position).normalize();
+      this.perspCamera.position.addScaledVector(dir, 1.2);
+      this.controls.update();
+    });
+
+    document.getElementById('btn-dock-zoom-out')?.addEventListener('click', () => {
+      const dir = new THREE.Vector3().subVectors(this.controls.target, this.perspCamera.position).normalize();
+      this.perspCamera.position.addScaledVector(dir, -1.2);
+      this.controls.update();
+    });
+
+    document.querySelectorAll('.btn-dock-nudge').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const dx = Number(btn.dataset.dockNudgeX) || 0;
+        const dz = Number(btn.dataset.dockNudgeZ) || 0;
+        const moveContents = document.getElementById('room-move-contents-toggle')?.checked ?? true;
+        this.moveActiveRoom(dx, dz, moveContents, 'إزاحة سريعة للغرفة');
+      });
+    });
 
     // أزرار التراجع والإعادة
     document.getElementById('btn-undo')?.addEventListener('click', () => this.undo());
@@ -2965,14 +3071,32 @@ class RoomStudioApp {
     this.pushHistory(`تناسق لوني: ${palette.name}`);
   }
 
-  renderCatalogList(category) {
+  renderCatalogList(category = 'all') {
+    this.currentCatalogCategory = category;
     const listEl = document.getElementById('catalog-list');
     if (!listEl) return;
     listEl.innerHTML = '';
 
-    const filtered = category === 'all'
+    const q = (this.catalogSearchQuery || '').trim().toLowerCase();
+    let filtered = category === 'all'
       ? window.FURNITURE_CATALOG
       : window.FURNITURE_CATALOG.filter(i => i.category === category);
+
+    if (q) {
+      filtered = filtered.filter(i => 
+        i.name.toLowerCase().includes(q) || 
+        (i.category && i.category.toLowerCase().includes(q))
+      );
+    }
+
+    if (filtered.length === 0) {
+      listEl.innerHTML = `
+        <div class="p-6 text-center text-slate-500 text-xs">
+          <span>🔍 لا توجد عناصر تطابق البحث "${q}"</span>
+        </div>
+      `;
+      return;
+    }
 
     filtered.forEach(item => {
       const card = document.createElement('div');
@@ -3338,8 +3462,104 @@ class RoomStudioApp {
     });
   }
 
+  // ==================== تحكم وسلاسة الكاميرا ثلاثية الأبعاد (Smooth Camera Transitions) ====================
+  startCameraTransition(toCamX, toCamY, toCamZ, toTgtX, toTgtY, toTgtZ, durationMs = 380) {
+    if (this.viewMode === '2d') {
+      this.setViewMode('3d');
+    }
+    this.cameraTransition = {
+      startTime: performance.now(),
+      duration: durationMs,
+      startCam: this.perspCamera.position.clone(),
+      endCam: new THREE.Vector3(toCamX, toCamY, toCamZ),
+      startTgt: this.controls.target.clone(),
+      endTgt: new THREE.Vector3(toTgtX, toTgtY, toTgtZ)
+    };
+  }
+
+  updateCameraTransition() {
+    if (!this.cameraTransition) return;
+    const now = performance.now();
+    const elapsed = now - this.cameraTransition.startTime;
+    const progress = Math.min(1, elapsed / this.cameraTransition.duration);
+    // Smooth easeInOutQuad
+    const ease = progress < 0.5 ? 2 * progress * progress : -1 + (4 - 2 * progress) * progress;
+
+    this.perspCamera.position.lerpVectors(this.cameraTransition.startCam, this.cameraTransition.endCam, ease);
+    this.controls.target.lerpVectors(this.cameraTransition.startTgt, this.cameraTransition.endTgt, ease);
+
+    if (progress >= 1) {
+      this.cameraTransition = null;
+    }
+  }
+
+  focusOnActiveRoom(smooth = true, lowAngle = false) {
+    const r = this.activeRoom;
+    if (!r) return;
+    const targetX = r.offsetX / 100;
+    const targetZ = r.offsetZ / 100;
+    const targetY = lowAngle ? 0.25 : 0.45;
+
+    let camX, camY, camZ;
+    if (lowAngle) {
+      // زاوية أرضية منخفضة قريبة لرؤية الموكيت، أقدام الأثاث، والأجزاء السفلية
+      camX = targetX + (r.width / 200) * 0.95;
+      camY = 0.85;
+      camZ = targetZ + (r.depth / 200) * 1.15;
+    } else {
+      // منظور علوي مريح ومائل للغرفة
+      camX = targetX + Math.max(3.8, (r.width / 100) * 0.95);
+      camY = Math.max(3.6, (r.height / 100) * 1.3);
+      camZ = targetZ + Math.max(4.2, (r.depth / 100) * 1.05);
+    }
+
+    if (!smooth) {
+      this.controls.target.set(targetX, targetY, targetZ);
+      this.perspCamera.position.set(camX, camY, camZ);
+      this.controls.update();
+      return;
+    }
+
+    this.startCameraTransition(camX, camY, camZ, targetX, targetY, targetZ, 400);
+  }
+
+  fitAllRooms(smooth = true) {
+    if (!this.rooms.length) return;
+    let minX = Infinity, maxX = -Infinity;
+    let minZ = Infinity, maxZ = -Infinity;
+    this.rooms.forEach(r => {
+      minX = Math.min(minX, (r.offsetX - r.width / 2) / 100);
+      maxX = Math.max(maxX, (r.offsetX + r.width / 2) / 100);
+      minZ = Math.min(minZ, (r.offsetZ - r.depth / 2) / 100);
+      maxZ = Math.max(maxZ, (r.offsetZ + r.depth / 2) / 100);
+    });
+
+    const centerX = (minX + maxX) / 2;
+    const centerZ = (minZ + maxZ) / 2;
+    const spanX = maxX - minX;
+    const spanZ = maxZ - minZ;
+    const maxSpan = Math.max(spanX, spanZ, 4.5);
+
+    const dist = Math.max(7.5, maxSpan * 1.6);
+    const camX = centerX + dist * 0.72;
+    const camY = Math.max(6.5, dist * 0.88);
+    const camZ = centerZ + dist * 0.78;
+
+    if (!smooth) {
+      this.controls.target.set(centerX, 0.45, centerZ);
+      this.perspCamera.position.set(camX, camY, camZ);
+      this.controls.update();
+      return;
+    }
+
+    this.startCameraTransition(camX, camY, camZ, centerX, 0.45, centerZ, 480);
+  }
+
   animate() {
     requestAnimationFrame(() => this.animate());
+    if (this.cameraTransition) {
+      this.updateCameraTransition();
+    }
     if (this.lightingSettings?.autoOrbit) {
       this.lightingSettings.azimuth = (this.lightingSettings.azimuth + 0.35) % 360;
       this.updateLights();

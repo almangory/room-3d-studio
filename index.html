@@ -156,212 +156,270 @@
   <div class="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
 
     <!-- 1. اللوحة الجانبية اليمنى: إدارة غرف المنزل المتجاورة + كتالوج الأثاث الموسع -->
-    <aside class="w-full lg:w-84 bg-slate-900/95 border-b lg:border-b-0 lg:border-e border-slate-800 flex flex-col h-64 lg:h-full shrink-0 z-20 overflow-y-auto" style="width: 340px;">
+    <aside class="w-full lg:w-[360px] bg-slate-900/95 border-b lg:border-b-0 lg:border-e border-slate-800 flex flex-col h-72 lg:h-full shrink-0 z-20 overflow-hidden shadow-2xl">
 
-      <!-- قسم إدارة غرف المنزل المتجاورة (Multi-Room House Manager) -->
-      <div class="p-3 border-b border-slate-800 bg-slate-900/80 space-y-2.5">
-        <div class="flex items-center justify-between">
-          <h2 class="text-xs font-extrabold text-sky-400 flex items-center gap-1.5">
+      <!-- شريط تبديل أقسام اللوحة الجانبية (Navigation Mode Switcher) -->
+      <div class="p-2 bg-slate-950 border-b border-slate-800 shrink-0">
+        <div class="grid grid-cols-3 gap-1 bg-slate-900 p-1 rounded-xl border border-slate-800 text-[11px] font-extrabold">
+          <button id="btn-sidebar-tab-rooms" type="button" class="sidebar-tab-btn py-1.5 px-1 rounded-lg bg-sky-600 text-white shadow transition-all flex items-center justify-center gap-1">
             <span>🏘️</span>
-            <span>غرف المنزل المتجاورة (انقر للتنقل)</span>
-          </h2>
-          <button id="btn-delete-room" type="button" class="text-[10px] px-2 py-0.5 rounded bg-rose-950/80 hover:bg-rose-700 text-rose-300 border border-rose-800/60 transition-colors" title="حذف الغرفة المحددة">
-            حذف الغرفة
+            <span>الغرف والوزن</span>
           </button>
-        </div>
-
-        <!-- تبويبات الغرف الحالية -->
-        <div id="rooms-tabs-container" class="flex flex-wrap gap-1.5"></div>
-
-        <!-- أزرار إضافة غرفة جديدة ملاصقة للغرفة الحالية -->
-        <div class="bg-slate-950/80 p-2 rounded-xl border border-slate-800/90">
-          <span class="block text-[10px] text-slate-400 mb-1.5 font-semibold">+ إلحاق غرفة جديدة مجاورة للغرفة الحالية:</span>
-          <div class="grid grid-cols-4 gap-1">
-            <button type="button" data-dir="east" class="btn-add-adj-room py-1 px-1.5 rounded-lg bg-slate-800 hover:bg-sky-600 text-[11px] font-bold text-slate-200 hover:text-white transition-colors">
-              + يمين
-            </button>
-            <button type="button" data-dir="west" class="btn-add-adj-room py-1 px-1.5 rounded-lg bg-slate-800 hover:bg-sky-600 text-[11px] font-bold text-slate-200 hover:text-white transition-colors">
-              + يسار
-            </button>
-            <button type="button" data-dir="north" class="btn-add-adj-room py-1 px-1.5 rounded-lg bg-slate-800 hover:bg-sky-600 text-[11px] font-bold text-slate-200 hover:text-white transition-colors">
-              + خلف
-            </button>
-            <button type="button" data-dir="south" class="btn-add-adj-room py-1 px-1.5 rounded-lg bg-slate-800 hover:bg-sky-600 text-[11px] font-bold text-slate-200 hover:text-white transition-colors">
-              + أمام
-            </button>
-          </div>
-        </div>
-
-        <!-- اسم وأبعاد الغرفة المحددة حالياً بالسنتيمتر -->
-        <div class="pt-1 space-y-2">
-          <div class="flex items-center gap-2">
-            <label for="active-room-name" class="text-[11px] text-slate-400 shrink-0">اسم الغرفة:</label>
-            <input id="active-room-name" type="text" value="صالة المعيشة"
-              class="w-full bg-slate-950 text-white font-bold text-xs px-2.5 py-1 rounded-lg border border-slate-800 focus:outline-none focus:border-sky-500">
-          </div>
-
-          <div class="grid grid-cols-3 gap-1.5">
-            <div class="bg-slate-950/90 p-1.5 rounded-xl border border-slate-800">
-              <label for="room-width-input" class="block text-[10px] text-slate-400 mb-0.5">العرض X (سم)</label>
-              <input id="room-width-input" type="number" min="150" max="1500" step="10" value="500"
-                class="w-full bg-slate-900 text-white font-bold text-xs px-1.5 py-1 rounded border border-slate-700 text-center">
-            </div>
-            <div class="bg-slate-950/90 p-1.5 rounded-xl border border-slate-800">
-              <label for="room-depth-input" class="block text-[10px] text-slate-400 mb-0.5">الطول Z (سم)</label>
-              <input id="room-depth-input" type="number" min="150" max="1500" step="10" value="420"
-                class="w-full bg-slate-900 text-white font-bold text-xs px-1.5 py-1 rounded border border-slate-700 text-center">
-            </div>
-            <div class="bg-slate-950/90 p-1.5 rounded-xl border border-slate-800">
-              <label for="room-height-input" class="block text-[10px] text-slate-400 mb-0.5">السقف Y (سم)</label>
-              <input id="room-height-input" type="number" min="220" max="500" step="10" value="300"
-                class="w-full bg-slate-900 text-white font-bold text-xs px-1.5 py-1 rounded border border-slate-700 text-center">
-            </div>
-          </div>
-
-          <!-- إحداثيات موقع الغرفة وتحريكها مع أثاثها -->
-          <div class="bg-slate-950/80 p-2.5 rounded-xl border border-slate-800/90 space-y-1.5">
-            <div class="flex items-center justify-between">
-              <span class="text-[10px] font-bold text-sky-400 flex items-center gap-1">
-                <span>📍</span>
-                <span>موقع الغرفة في المخطط:</span>
-              </span>
-              <label class="text-[9px] text-slate-400 flex items-center gap-1 cursor-pointer">
-                <input id="room-move-contents-toggle" type="checkbox" checked class="rounded border-slate-700 accent-sky-500">
-                <span>نقل الأثاث معها</span>
-              </label>
-            </div>
-            <div class="grid grid-cols-2 gap-1.5">
-              <div>
-                <label for="room-pos-x" class="block text-[9px] text-slate-400 mb-0.5">إحداثي أفقي X (سم)</label>
-                <input id="room-pos-x" type="number" step="10" value="0" class="w-full bg-slate-900 text-white font-bold text-xs px-1.5 py-1 rounded border border-slate-700 text-center">
-              </div>
-              <div>
-                <label for="room-pos-z" class="block text-[9px] text-slate-400 mb-0.5">إحداثي رأسي Z (سم)</label>
-                <input id="room-pos-z" type="number" step="10" value="0" class="w-full bg-slate-900 text-white font-bold text-xs px-1.5 py-1 rounded border border-slate-700 text-center">
-              </div>
-            </div>
-
-            <!-- أزرار الإزاحة السريعة بالأسهم -->
-            <div class="flex items-center justify-between gap-1 pt-1.5 border-t border-slate-800/80">
-              <span class="text-[9px] text-slate-400">إزاحة سريعة:</span>
-              <div class="flex items-center gap-1">
-                <button type="button" data-rdx="-25" data-rdz="0" class="btn-nudge-room px-1.5 py-0.5 rounded bg-slate-900 hover:bg-sky-600 border border-slate-700 text-[10px] font-bold text-slate-200 hover:text-white transition-colors" title="إزاحة لليسار غرباً -25 سم">⬅️ 25-</button>
-                <button type="button" data-rdx="25" data-rdz="0" class="btn-nudge-room px-1.5 py-0.5 rounded bg-slate-900 hover:bg-sky-600 border border-slate-700 text-[10px] font-bold text-slate-200 hover:text-white transition-colors" title="إزاحة لليمين شرقاً +25 سم">➡️ 25+</button>
-                <button type="button" data-rdx="0" data-rdz="-25" class="btn-nudge-room px-1.5 py-0.5 rounded bg-slate-900 hover:bg-sky-600 border border-slate-700 text-[10px] font-bold text-slate-200 hover:text-white transition-colors" title="إزاحة للخلف شمالاً -25 سم">⬆️ 25-</button>
-                <button type="button" data-rdx="0" data-rdz="25" class="btn-nudge-room px-1.5 py-0.5 rounded bg-slate-900 hover:bg-sky-600 border border-slate-700 text-[10px] font-bold text-slate-200 hover:text-white transition-colors" title="إزاحة للأمام جنوباً +25 سم">⬇️ 25+</button>
-              </div>
-            </div>
-          </div>
-
-          <!-- أدوات وزن ومحاذاة الغرفة مع الغرف المجاورة (Room Alignment & Flush "وزن الغرف") -->
-          <div id="room-alignment-section" class="bg-slate-950/90 p-2.5 rounded-2xl border border-emerald-500/40 space-y-2">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-bold text-emerald-400 flex items-center gap-1">
-                <span>⚖️</span>
-                <span>وزن ومحاذاة الغرفة</span>
-              </span>
-              <span class="text-[9px] text-slate-400 font-medium">استقامة الحواف</span>
-            </div>
-
-            <!-- اختيار الغرفة المرجعية للوزن معها -->
-            <div>
-              <label for="room-align-target-select" class="block text-[10px] text-slate-400 mb-1">اختر الغرفة المراد المحاذاة والوزن معها:</label>
-              <select id="room-align-target-select" class="w-full bg-slate-900 text-slate-100 text-xs font-bold px-2 py-1.5 rounded-lg border border-slate-700 focus:outline-none focus:ring-1 focus:ring-emerald-500"></select>
-            </div>
-
-            <!-- 1. أزرار وزن الحواف واستقامتها على نفس الخط (Flush Edges) -->
-            <div class="space-y-1">
-              <span class="block text-[9px] text-slate-400 font-semibold">وزن الحواف على استقامة واحدة متصلة:</span>
-              <div class="grid grid-cols-2 gap-1 text-[10px]">
-                <button type="button" data-align-mode="flush_north" class="btn-align-room py-1 px-1.5 rounded-lg bg-slate-900 hover:bg-emerald-600 text-slate-200 hover:text-white border border-slate-800 font-bold transition-all flex items-center justify-center gap-1" title="محاذاة ووزن الحائط الخلفي على نفس خط الحائط الخلفي للغرفة المجاورة">
-                  <span>⏶</span>
-                  <span>وزن الحافة الخلفية</span>
-                </button>
-                <button type="button" data-align-mode="flush_south" class="btn-align-room py-1 px-1.5 rounded-lg bg-slate-900 hover:bg-emerald-600 text-slate-200 hover:text-white border border-slate-800 font-bold transition-all flex items-center justify-center gap-1" title="محاذاة ووزن الحائط الأمامي على نفس خط الحائط الأمامي للغرفة المجاورة">
-                  <span>⏷</span>
-                  <span>وزن الحافة الأمامية</span>
-                </button>
-                <button type="button" data-align-mode="flush_east" class="btn-align-room py-1 px-1.5 rounded-lg bg-slate-900 hover:bg-emerald-600 text-slate-200 hover:text-white border border-slate-800 font-bold transition-all flex items-center justify-center gap-1" title="محاذاة ووزن الحائط الأيمن على نفس الخط">
-                  <span>⏵</span>
-                  <span>وزن الحافة اليمنى</span>
-                </button>
-                <button type="button" data-align-mode="flush_west" class="btn-align-room py-1 px-1.5 rounded-lg bg-slate-900 hover:bg-emerald-600 text-slate-200 hover:text-white border border-slate-800 font-bold transition-all flex items-center justify-center gap-1" title="محاذاة ووزن الحائط الأيسر على نفس الخط">
-                  <span>⏴</span>
-                  <span>وزن الحافة اليسرى</span>
-                </button>
-                <button type="button" data-align-mode="center_x" class="btn-align-room py-1 px-1.5 rounded-lg bg-slate-900 hover:bg-emerald-600 text-slate-200 hover:text-white border border-slate-800 font-bold transition-all flex items-center justify-center gap-1 col-span-2" title="توسيط الغرفة أفقياً مع الغرفة المحددة">
-                  <span>🎯</span>
-                  <span>توسيط أفقي مع الغرفة</span>
-                </button>
-              </div>
-            </div>
-
-            <!-- 2. أزرار الالتصاق والملاصقة المباشرة (Snap & Attach) -->
-            <div class="space-y-1 pt-1.5 border-t border-slate-800/80">
-              <span class="block text-[9px] text-slate-400 font-semibold">التصاق وملاصقة تامة بدون فواصل:</span>
-              <div class="grid grid-cols-4 gap-1 text-[10px]">
-                <button type="button" data-align-mode="attach_east" class="btn-align-room py-1 px-1 rounded-lg bg-slate-900 hover:bg-sky-600 text-slate-200 hover:text-white border border-slate-800 font-bold transition-all" title="التصاق بالجانب الأيمن للغرفة المجاورة">
-                  يمين 🧲
-                </button>
-                <button type="button" data-align-mode="attach_west" class="btn-align-room py-1 px-1 rounded-lg bg-slate-900 hover:bg-sky-600 text-slate-200 hover:text-white border border-slate-800 font-bold transition-all" title="التصاق بالجانب الأيسر للغرفة المجاورة">
-                  يسار 🧲
-                </button>
-                <button type="button" data-align-mode="attach_north" class="btn-align-room py-1 px-1 rounded-lg bg-slate-900 hover:bg-sky-600 text-slate-200 hover:text-white border border-slate-800 font-bold transition-all" title="التصاق بالجانب الخلفي للغرفة المجاورة">
-                  خلف 🧲
-                </button>
-                <button type="button" data-align-mode="attach_south" class="btn-align-room py-1 px-1 rounded-lg bg-slate-900 hover:bg-sky-600 text-slate-200 hover:text-white border border-slate-800 font-bold transition-all" title="التصاق بالجانب الأمامي للغرفة المجاورة">
-                  أمام 🧲
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- اختيار خامة الأرضية ولون الحوائط للغرفة المحددة -->
-          <div class="space-y-1.5">
-            <div class="grid grid-cols-2 gap-2">
-              <div>
-                <label for="room-floor-select" class="block text-[10px] text-slate-400 mb-0.5">أرضية وموكيت الغرفة</label>
-                <select id="room-floor-select" class="w-full bg-slate-950 text-slate-200 text-xs font-medium px-2 py-1 rounded-lg border border-slate-800"></select>
-              </div>
-              <div>
-                <label for="room-wall-select" class="block text-[10px] text-slate-400 mb-0.5">دهان وجدران الغرفة</label>
-                <select id="room-wall-select" class="w-full bg-slate-950 text-slate-200 text-xs font-medium px-2 py-1 rounded-lg border border-slate-800"></select>
-              </div>
-            </div>
-            <div class="grid grid-cols-2 gap-2">
-              <div class="flex items-center justify-between bg-slate-950/80 px-2 py-1 rounded-lg border border-slate-800">
-                <span class="text-[10px] text-slate-400">تدرج موكيت حر:</span>
-                <input id="room-floor-custom" type="color" value="#d8c5b0" class="w-5 h-5 rounded cursor-pointer border-0 bg-transparent p-0" title="اختر تدرج موكيت أو باركيه مخصص">
-              </div>
-              <div class="flex items-center justify-between bg-slate-950/80 px-2 py-1 rounded-lg border border-slate-800">
-                <span class="text-[10px] text-slate-400">دهان جدار حر:</span>
-                <input id="room-wall-custom" type="color" value="#f8fafc" class="w-5 h-5 rounded cursor-pointer border-0 bg-transparent p-0" title="اختر لون دهان مخصص">
-              </div>
-            </div>
-          </div>
+          <button id="btn-sidebar-tab-catalog" type="button" class="sidebar-tab-btn py-1.5 px-1 rounded-lg text-slate-400 hover:text-white transition-all flex items-center justify-center gap-1">
+            <span>🛋️</span>
+            <span>كتالوج الأثاث</span>
+          </button>
+          <button id="btn-sidebar-tab-all" type="button" class="sidebar-tab-btn py-1.5 px-1 rounded-lg text-slate-400 hover:text-white transition-all flex items-center justify-center gap-1">
+            <span>📋</span>
+            <span>عرض شامل</span>
+          </button>
         </div>
       </div>
 
-      <!-- قسم كتالوج الأثاث والمكونات المعمارية (49+ عنصر قياسي) -->
-      <div class="p-3 flex-1 flex flex-col min-h-0">
-        <h2 class="text-xs font-extrabold text-emerald-400 mb-2 flex items-center justify-between">
-          <span>🛋️ كتالوج الأثاث والمعمارية</span>
-          <span class="text-[10px] text-slate-400 font-normal">يُضاف للغرفة النشطة</span>
-        </h2>
+      <!-- الحاوية المرنة للأقسام -->
+      <div class="flex-1 flex flex-col min-h-0 overflow-hidden">
 
-        <!-- فلاتر التصنيف الموسعة (7 أقسام شاملة الستائر وإكسسوارات الزينة) -->
-        <div class="grid grid-cols-4 sm:grid-cols-7 gap-1 mb-2.5">
-          <button type="button" data-cat="all" class="cat-filter-btn px-1 py-1.5 rounded-lg text-[10px] font-bold bg-sky-600 text-white transition-colors">الكل</button>
-          <button type="button" data-cat="decor" class="cat-filter-btn px-1 py-1.5 rounded-lg text-[10px] font-bold bg-slate-800 text-emerald-300 hover:text-white transition-colors">🌿 زينة/ستائر</button>
-          <button type="button" data-cat="living" class="cat-filter-btn px-1 py-1.5 rounded-lg text-[10px] font-bold bg-slate-800 text-slate-300 hover:text-white transition-colors">معيشة</button>
-          <button type="button" data-cat="bedroom" class="cat-filter-btn px-1 py-1.5 rounded-lg text-[10px] font-bold bg-slate-800 text-slate-300 hover:text-white transition-colors">نوم</button>
-          <button type="button" data-cat="kitchen" class="cat-filter-btn px-1 py-1.5 rounded-lg text-[10px] font-bold bg-slate-800 text-slate-300 hover:text-white transition-colors">مطبخ/حمام</button>
-          <button type="button" data-cat="dining" class="cat-filter-btn px-1 py-1.5 rounded-lg text-[10px] font-bold bg-slate-800 text-slate-300 hover:text-white transition-colors">سفرة/مكتب</button>
-          <button type="button" data-cat="arch" class="cat-filter-btn px-1 py-1.5 rounded-lg text-[10px] font-bold bg-slate-800 text-slate-300 hover:text-white transition-colors">معماري</button>
+        <!-- قسم 1: إدارة غرف المنزل وتخطيطها ووزنها -->
+        <div id="sidebar-section-rooms" class="flex-1 overflow-y-auto p-3 space-y-3">
+          
+          <!-- بطاقة تبويبات الغرف وإضافة غرف جديدة -->
+          <div class="bg-slate-950/90 p-3 rounded-2xl border border-slate-800 space-y-2.5">
+            <div class="flex items-center justify-between">
+              <h2 class="text-xs font-extrabold text-sky-400 flex items-center gap-1.5">
+                <span>🏘️</span>
+                <span>غرف المنزل المتجاورة</span>
+              </h2>
+              <button id="btn-delete-room" type="button" class="text-[10px] px-2 py-0.5 rounded bg-rose-950/80 hover:bg-rose-700 text-rose-300 border border-rose-800/60 transition-colors" title="حذف الغرفة المحددة">
+                حذف الغرفة
+              </button>
+            </div>
+
+            <!-- تبويبات الغرف الحالية -->
+            <div id="rooms-tabs-container" class="flex flex-wrap gap-1.5"></div>
+
+            <!-- أزرار إضافة غرفة جديدة ملاصقة -->
+            <div class="bg-slate-900/80 p-2 rounded-xl border border-slate-800">
+              <span class="block text-[10px] text-slate-400 mb-1.5 font-semibold">+ إلحاق غرفة جديدة ملاصقة للغرفة الحالية:</span>
+              <div class="grid grid-cols-4 gap-1">
+                <button type="button" data-dir="east" class="btn-add-adj-room py-1 px-1.5 rounded-lg bg-slate-800 hover:bg-sky-600 text-[11px] font-bold text-slate-200 hover:text-white transition-colors">
+                  + يمين
+                </button>
+                <button type="button" data-dir="west" class="btn-add-adj-room py-1 px-1.5 rounded-lg bg-slate-800 hover:bg-sky-600 text-[11px] font-bold text-slate-200 hover:text-white transition-colors">
+                  + يسار
+                </button>
+                <button type="button" data-dir="north" class="btn-add-adj-room py-1 px-1.5 rounded-lg bg-slate-800 hover:bg-sky-600 text-[11px] font-bold text-slate-200 hover:text-white transition-colors">
+                  + خلف
+                </button>
+                <button type="button" data-dir="south" class="btn-add-adj-room py-1 px-1.5 rounded-lg bg-slate-800 hover:bg-sky-600 text-[11px] font-bold text-slate-200 hover:text-white transition-colors">
+                  + أمام
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- أكورديون 1: أبعاد وخامات الغرفة النشطة -->
+          <div class="bg-slate-950/90 rounded-2xl border border-slate-800 overflow-hidden">
+            <button type="button" data-accordion-toggle="accordion-room-dims" class="w-full p-2.5 bg-slate-900/60 hover:bg-slate-900 flex items-center justify-between text-xs font-bold text-slate-200 transition-colors">
+              <span class="flex items-center gap-1.5 text-sky-400">
+                <span>📐</span>
+                <span>أبعاد وخامات الغرفة النشطة</span>
+              </span>
+              <span class="accordion-arrow text-slate-400 text-xs">▼</span>
+            </button>
+            
+            <div id="accordion-room-dims" class="p-3 space-y-2.5 border-t border-slate-800/80">
+              <div class="flex items-center gap-2">
+                <label for="active-room-name" class="text-[11px] text-slate-400 shrink-0">اسم الغرفة:</label>
+                <input id="active-room-name" type="text" value="صالة المعيشة"
+                  class="w-full bg-slate-900 text-white font-bold text-xs px-2.5 py-1.5 rounded-lg border border-slate-700 focus:outline-none focus:border-sky-500">
+              </div>
+
+              <div class="grid grid-cols-3 gap-1.5">
+                <div class="bg-slate-900/90 p-1.5 rounded-xl border border-slate-800">
+                  <label for="room-width-input" class="block text-[10px] text-slate-400 mb-0.5">العرض X (سم)</label>
+                  <input id="room-width-input" type="number" min="150" max="1500" step="10" value="500"
+                    class="w-full bg-slate-950 text-white font-bold text-xs px-1.5 py-1 rounded border border-slate-700 text-center">
+                </div>
+                <div class="bg-slate-900/90 p-1.5 rounded-xl border border-slate-800">
+                  <label for="room-depth-input" class="block text-[10px] text-slate-400 mb-0.5">الطول Z (سم)</label>
+                  <input id="room-depth-input" type="number" min="150" max="1500" step="10" value="420"
+                    class="w-full bg-slate-950 text-white font-bold text-xs px-1.5 py-1 rounded border border-slate-700 text-center">
+                </div>
+                <div class="bg-slate-900/90 p-1.5 rounded-xl border border-slate-800">
+                  <label for="room-height-input" class="block text-[10px] text-slate-400 mb-0.5">السقف Y (سم)</label>
+                  <input id="room-height-input" type="number" min="220" max="500" step="10" value="300"
+                    class="w-full bg-slate-950 text-white font-bold text-xs px-1.5 py-1 rounded border border-slate-700 text-center">
+                </div>
+              </div>
+
+              <!-- اختيار خامة الأرضية ولون الحوائط للغرفة المحددة -->
+              <div class="space-y-1.5 pt-1 border-t border-slate-800/80">
+                <div class="grid grid-cols-2 gap-2">
+                  <div>
+                    <label for="room-floor-select" class="block text-[10px] text-slate-400 mb-0.5">أرضية وموكيت الغرفة</label>
+                    <select id="room-floor-select" class="w-full bg-slate-900 text-slate-200 text-xs font-medium px-2 py-1.5 rounded-lg border border-slate-700"></select>
+                  </div>
+                  <div>
+                    <label for="room-wall-select" class="block text-[10px] text-slate-400 mb-0.5">دهان وجدران الغرفة</label>
+                    <select id="room-wall-select" class="w-full bg-slate-900 text-slate-200 text-xs font-medium px-2 py-1.5 rounded-lg border border-slate-700"></select>
+                  </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                  <div class="flex items-center justify-between bg-slate-900/80 px-2 py-1 rounded-lg border border-slate-800">
+                    <span class="text-[10px] text-slate-400">تدرج موكيت حر:</span>
+                    <input id="room-floor-custom" type="color" value="#d8c5b0" class="w-5 h-5 rounded cursor-pointer border-0 bg-transparent p-0" title="اختر تدرج موكيت أو باركيه مخصص">
+                  </div>
+                  <div class="flex items-center justify-between bg-slate-900/80 px-2 py-1 rounded-lg border border-slate-800">
+                    <span class="text-[10px] text-slate-400">دهان جدار حر:</span>
+                    <input id="room-wall-custom" type="color" value="#f8fafc" class="w-5 h-5 rounded cursor-pointer border-0 bg-transparent p-0" title="اختر لون دهان مخصص">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- أكورديون 2: موقع الغرفة والإزاحة السريعة -->
+          <div class="bg-slate-950/90 rounded-2xl border border-sky-500/40 overflow-hidden">
+            <button type="button" data-accordion-toggle="accordion-room-pos" class="w-full p-2.5 bg-slate-900/60 hover:bg-slate-900 flex items-center justify-between text-xs font-bold text-slate-200 transition-colors">
+              <span class="flex items-center gap-1.5 text-sky-400">
+                <span>📍</span>
+                <span>موقع الغرفة في المخطط والإزاحة</span>
+              </span>
+              <span class="accordion-arrow text-slate-400 text-xs">▼</span>
+            </button>
+            
+            <div id="accordion-room-pos" class="p-3 space-y-2 border-t border-slate-800/80">
+              <div class="flex items-center justify-between">
+                <span class="text-[10px] text-slate-400">إحداثيات المركز بالسنتيمتر:</span>
+                <label class="text-[9px] text-slate-300 flex items-center gap-1.5 cursor-pointer bg-slate-900 px-2 py-0.5 rounded-md border border-slate-800">
+                  <input id="room-move-contents-toggle" type="checkbox" checked class="rounded border-slate-700 accent-sky-500">
+                  <span>نقل الأثاث معها</span>
+                </label>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label for="room-pos-x" class="block text-[9px] text-slate-400 mb-0.5">إحداثي أفقي X (سم)</label>
+                  <input id="room-pos-x" type="number" step="10" value="0" class="w-full bg-slate-900 text-white font-bold text-xs px-2 py-1.5 rounded-lg border border-slate-700 text-center">
+                </div>
+                <div>
+                  <label for="room-pos-z" class="block text-[9px] text-slate-400 mb-0.5">إحداثي رأسي Z (سم)</label>
+                  <input id="room-pos-z" type="number" step="10" value="0" class="w-full bg-slate-900 text-white font-bold text-xs px-2 py-1.5 rounded-lg border border-slate-700 text-center">
+                </div>
+              </div>
+
+              <!-- أزرار الإزاحة السريعة بالأسهم -->
+              <div class="pt-2 border-t border-slate-800/80">
+                <span class="block text-[9px] text-slate-400 mb-1 font-semibold">إزاحة سريعة بخطوات 25 سم:</span>
+                <div class="grid grid-cols-4 gap-1 text-[10px]">
+                  <button type="button" data-rdx="-25" data-rdz="0" class="btn-nudge-room py-1.5 px-1 rounded-lg bg-slate-900 hover:bg-sky-600 border border-slate-800 font-bold text-slate-200 hover:text-white transition-all text-center" title="إزاحة لليسار غرباً -25 سم">⬅️ 25-</button>
+                  <button type="button" data-rdx="25" data-rdz="0" class="btn-nudge-room py-1.5 px-1 rounded-lg bg-slate-900 hover:bg-sky-600 border border-slate-800 font-bold text-slate-200 hover:text-white transition-all text-center" title="إزاحة لليمين شرقاً +25 سم">➡️ 25+</button>
+                  <button type="button" data-rdx="0" data-rdz="-25" class="btn-nudge-room py-1.5 px-1 rounded-lg bg-slate-900 hover:bg-sky-600 border border-slate-800 font-bold text-slate-200 hover:text-white transition-all text-center" title="إزاحة للخلف شمالاً -25 سم">⬆️ 25-</button>
+                  <button type="button" data-rdx="0" data-rdz="25" class="btn-nudge-room py-1.5 px-1 rounded-lg bg-slate-900 hover:bg-sky-600 border border-slate-800 font-bold text-slate-200 hover:text-white transition-all text-center" title="إزاحة للأمام جنوباً +25 سم">⬇️ 25+</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- أكورديون 3: وزن ومحاذاة الغرفة مع الغرف المجاورة -->
+          <div id="room-alignment-section" class="bg-slate-950/90 rounded-2xl border border-emerald-500/40 overflow-hidden">
+            <button type="button" data-accordion-toggle="accordion-room-align" class="w-full p-2.5 bg-slate-900/60 hover:bg-slate-900 flex items-center justify-between text-xs font-bold text-emerald-400 transition-colors">
+              <span class="flex items-center gap-1.5">
+                <span>⚖️</span>
+                <span>وزن ومحاذاة الحواف (Flush & Snap)</span>
+              </span>
+              <span class="accordion-arrow text-slate-400 text-xs">▼</span>
+            </button>
+
+            <div id="accordion-room-align" class="p-3 space-y-2.5 border-t border-slate-800/80">
+              <!-- اختيار الغرفة المرجعية -->
+              <div>
+                <label for="room-align-target-select" class="block text-[10px] text-slate-400 mb-1">اختر الغرفة المراد المحاذاة والوزن معها:</label>
+                <select id="room-align-target-select" class="w-full bg-slate-900 text-slate-100 text-xs font-bold px-2 py-1.5 rounded-lg border border-slate-700 focus:outline-none focus:ring-1 focus:ring-emerald-500"></select>
+              </div>
+
+              <!-- 1. أزرار وزن الحواف واستقامتها على نفس الخط -->
+              <div class="space-y-1">
+                <span class="block text-[9px] text-slate-400 font-semibold">وزن الحواف على استقامة واحدة متصلة:</span>
+                <div class="grid grid-cols-2 gap-1 text-[10px]">
+                  <button type="button" data-align-mode="flush_north" class="btn-align-room py-1.5 px-1.5 rounded-lg bg-slate-900 hover:bg-emerald-600 text-slate-200 hover:text-white border border-slate-800 font-bold transition-all flex items-center justify-center gap-1" title="محاذاة ووزن الحائط الخلفي على نفس خط الحائط الخلفي للغرفة المجاورة">
+                    <span>⏶</span>
+                    <span>وزن الحافة الخلفية</span>
+                  </button>
+                  <button type="button" data-align-mode="flush_south" class="btn-align-room py-1.5 px-1.5 rounded-lg bg-slate-900 hover:bg-emerald-600 text-slate-200 hover:text-white border border-slate-800 font-bold transition-all flex items-center justify-center gap-1" title="محاذاة ووزن الحائط الأمامي على نفس خط الحائط الأمامي للغرفة المجاورة">
+                    <span>⏷</span>
+                    <span>وزن الحافة الأمامية</span>
+                  </button>
+                  <button type="button" data-align-mode="flush_east" class="btn-align-room py-1.5 px-1.5 rounded-lg bg-slate-900 hover:bg-emerald-600 text-slate-200 hover:text-white border border-slate-800 font-bold transition-all flex items-center justify-center gap-1" title="محاذاة ووزن الحائط الأيمن على نفس الخط">
+                    <span>⏵</span>
+                    <span>وزن الحافة اليمنى</span>
+                  </button>
+                  <button type="button" data-align-mode="flush_west" class="btn-align-room py-1.5 px-1.5 rounded-lg bg-slate-900 hover:bg-emerald-600 text-slate-200 hover:text-white border border-slate-800 font-bold transition-all flex items-center justify-center gap-1" title="محاذاة ووزن الحائط الأيسر على نفس الخط">
+                    <span>⏴</span>
+                    <span>وزن الحافة اليسرى</span>
+                  </button>
+                  <button type="button" data-align-mode="center_x" class="btn-align-room py-1.5 px-1.5 rounded-lg bg-slate-900 hover:bg-emerald-600 text-slate-200 hover:text-white border border-slate-800 font-bold transition-all flex items-center justify-center gap-1 col-span-2" title="توسيط الغرفة أفقياً مع الغرفة المحددة">
+                    <span>🎯</span>
+                    <span>توسيط أفقي مع الغرفة</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- 2. أزرار الالتصاق والملاصقة المباشرة -->
+              <div class="space-y-1 pt-2 border-t border-slate-800/80">
+                <span class="block text-[9px] text-slate-400 font-semibold">التصاق وملاصقة تامة بدون فواصل:</span>
+                <div class="grid grid-cols-4 gap-1 text-[10px]">
+                  <button type="button" data-align-mode="attach_east" class="btn-align-room py-1.5 px-1 rounded-lg bg-slate-900 hover:bg-sky-600 text-slate-200 hover:text-white border border-slate-800 font-bold transition-all text-center" title="التصاق بالجانب الأيمن للغرفة المجاورة">
+                    يمين 🧲
+                  </button>
+                  <button type="button" data-align-mode="attach_west" class="btn-align-room py-1.5 px-1 rounded-lg bg-slate-900 hover:bg-sky-600 text-slate-200 hover:text-white border border-slate-800 font-bold transition-all text-center" title="التصاق بالجانب الأيسر للغرفة المجاورة">
+                    يسار 🧲
+                  </button>
+                  <button type="button" data-align-mode="attach_north" class="btn-align-room py-1.5 px-1 rounded-lg bg-slate-900 hover:bg-sky-600 text-slate-200 hover:text-white border border-slate-800 font-bold transition-all text-center" title="التصاق بالجانب الخلفي للغرفة المجاورة">
+                    خلف 🧲
+                  </button>
+                  <button type="button" data-align-mode="attach_south" class="btn-align-room py-1.5 px-1 rounded-lg bg-slate-900 hover:bg-sky-600 text-slate-200 hover:text-white border border-slate-800 font-bold transition-all text-center" title="التصاق بالجانب الأمامي للغرفة المجاورة">
+                    أمام 🧲
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
 
-        <!-- قائمة القطع -->
-        <div id="catalog-list" class="flex-1 overflow-y-auto space-y-1.5 pe-1"></div>
+        <!-- قسم 2: كتالوج الأثاث والمكونات المعمارية الموسع -->
+        <div id="sidebar-section-catalog" class="hidden flex-1 flex flex-col min-h-0 p-3 overflow-hidden">
+          
+          <div class="flex items-center justify-between mb-2 shrink-0">
+            <h2 class="text-xs font-extrabold text-emerald-400 flex items-center gap-1.5">
+              <span>🛋️</span>
+              <span>كتالوج الأثاث والمعمارية</span>
+            </h2>
+            <span class="text-[10px] text-slate-400 font-normal">يُضاف للغرفة النشطة</span>
+          </div>
+
+          <!-- حقل بحث سريع داخل الكتالوج -->
+          <div class="relative mb-2 shrink-0">
+            <input id="catalog-search" type="text" placeholder="🔍 بحث في قطع الأثاث والديكور..."
+              class="w-full bg-slate-950 text-white text-xs px-3 py-1.5 rounded-xl border border-slate-800 focus:outline-none focus:border-sky-500">
+          </div>
+
+          <!-- فلاتر التصنيف الموسعة -->
+          <div class="grid grid-cols-4 sm:grid-cols-7 gap-1 mb-2.5 shrink-0">
+            <button type="button" data-cat="all" class="cat-filter-btn px-1 py-1.5 rounded-lg text-[10px] font-bold bg-sky-600 text-white transition-colors">الكل</button>
+            <button type="button" data-cat="decor" class="cat-filter-btn px-1 py-1.5 rounded-lg text-[10px] font-bold bg-slate-800 text-emerald-300 hover:text-white transition-colors">🌿 زينة</button>
+            <button type="button" data-cat="living" class="cat-filter-btn px-1 py-1.5 rounded-lg text-[10px] font-bold bg-slate-800 text-slate-300 hover:text-white transition-colors">معيشة</button>
+            <button type="button" data-cat="bedroom" class="cat-filter-btn px-1 py-1.5 rounded-lg text-[10px] font-bold bg-slate-800 text-slate-300 hover:text-white transition-colors">نوم</button>
+            <button type="button" data-cat="kitchen" class="cat-filter-btn px-1 py-1.5 rounded-lg text-[10px] font-bold bg-slate-800 text-slate-300 hover:text-white transition-colors">مطبخ</button>
+            <button type="button" data-cat="dining" class="cat-filter-btn px-1 py-1.5 rounded-lg text-[10px] font-bold bg-slate-800 text-slate-300 hover:text-white transition-colors">سفرة</button>
+            <button type="button" data-cat="arch" class="cat-filter-btn px-1 py-1.5 rounded-lg text-[10px] font-bold bg-slate-800 text-slate-300 hover:text-white transition-colors">معماري</button>
+          </div>
+
+          <!-- قائمة القطع (كامل الارتفاع مع تمرير مستقل وسلس جداً) -->
+          <div id="catalog-list" class="flex-1 min-h-0 overflow-y-auto space-y-1.5 pe-1 overscroll-contain"></div>
+        </div>
+
       </div>
     </aside>
 
@@ -547,6 +605,51 @@
           <span>⌨️ حرف R: تدوير 45°</span>
           <span>•</span>
           <span>⌨️ الأسهم: تحريك بالسنتيمتر</span>
+        </div>
+      </div>
+
+      <!-- شريط أدوات التنقل والكاميرا العائم أسفل شاشة العرض (Floating 3D Navigation Dock) -->
+      <div class="absolute bottom-4 inset-x-0 flex items-center justify-center pointer-events-none z-20 px-2">
+        <div class="pointer-events-auto bg-slate-900/95 backdrop-blur-xl border border-slate-700/80 shadow-2xl shadow-slate-950/90 rounded-2xl p-1.5 flex items-center gap-1 sm:gap-1.5">
+          
+          <!-- زر تركيز الكاميرا على الغرفة النشطة -->
+          <button id="btn-dock-focus-room" type="button" class="py-1.5 px-3 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs flex items-center gap-1.5 transition-all shadow-md active:scale-95" title="تركيز الكاميرا وبؤرة الدوران فوراً على الغرفة المحددة حالياً">
+            <span>🎯</span>
+            <span class="hidden sm:inline">تركيز على الغرفة</span>
+          </button>
+
+          <!-- زر الرؤية الأرضية المنخفضة للأجزاء السفلية والموكيت -->
+          <button id="btn-dock-low-angle" type="button" class="py-1.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 hover:text-amber-200 border border-slate-700 font-bold text-xs flex items-center gap-1.5 transition-all active:scale-95" title="زاوية رؤية منخفضة لكشف الأرضيات وأقدام الأثاث والأجزاء السفلية بوضوح">
+            <span>👁️</span>
+            <span class="hidden sm:inline">رؤية سفلية / أرضية</span>
+          </button>
+
+          <!-- زر احتواء كامل المنزل -->
+          <button id="btn-dock-fit-house" type="button" class="py-1.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-300 hover:text-emerald-200 border border-slate-700 font-bold text-xs flex items-center gap-1.5 transition-all active:scale-95" title="رؤية شاملة واحتواء كافة غرف المنزل في الشاشة">
+            <span>🏠</span>
+            <span class="hidden sm:inline">كامل المنزل</span>
+          </button>
+
+          <!-- فاصل رأسي -->
+          <div class="h-5 w-px bg-slate-700 mx-0.5"></div>
+
+          <!-- تقريب وتكبير -->
+          <button id="btn-dock-zoom-in" type="button" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-sm flex items-center justify-center transition-colors border border-slate-700 active:scale-95" title="تقريب المشهد (+)">
+            ＋
+          </button>
+          <button id="btn-dock-zoom-out" type="button" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-sm flex items-center justify-center transition-colors border border-slate-700 active:scale-95" title="إبعاد المشهد (-)">
+            －
+          </button>
+
+          <!-- مصغر الإزاحة السريعة المباشر (Quick Nudge Mini HUD) -->
+          <div class="hidden lg:flex items-center gap-1 ps-2 border-s border-slate-700/80">
+            <span class="text-[10px] text-slate-400 font-medium">إزاحة الغرفة:</span>
+            <button type="button" data-dock-nudge-x="-25" data-dock-nudge-z="0" class="btn-dock-nudge w-7 h-7 rounded-lg bg-slate-800 hover:bg-sky-600 text-xs font-bold text-white transition-colors flex items-center justify-center" title="إزاحة الغرفة 25 سم لليسار">⬅️</button>
+            <button type="button" data-dock-nudge-x="25" data-dock-nudge-z="0" class="btn-dock-nudge w-7 h-7 rounded-lg bg-slate-800 hover:bg-sky-600 text-xs font-bold text-white transition-colors flex items-center justify-center" title="إزاحة الغرفة 25 سم لليمين">➡️</button>
+            <button type="button" data-dock-nudge-x="0" data-dock-nudge-z="-25" class="btn-dock-nudge w-7 h-7 rounded-lg bg-slate-800 hover:bg-sky-600 text-xs font-bold text-white transition-colors flex items-center justify-center" title="إزاحة الغرفة 25 سم للخلف">⬆️</button>
+            <button type="button" data-dock-nudge-x="0" data-dock-nudge-z="25" class="btn-dock-nudge w-7 h-7 rounded-lg bg-slate-800 hover:bg-sky-600 text-xs font-bold text-white transition-colors flex items-center justify-center" title="إزاحة الغرفة 25 سم للأمام">⬇️</button>
+          </div>
+
         </div>
       </div>
     </main>
