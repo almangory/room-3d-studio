@@ -32,6 +32,18 @@ class RoomStudioApp {
       lightingMode: 'day'
     };
 
+    // إعدادات زوايا ولون وشدة الإضاءة والظلال
+    this.lightingSettings = {
+      azimuth: 135,
+      elevation: 50,
+      sunColor: '#fffbeb',
+      ambientColor: '#ffffff',
+      sunIntensity: 0.92,
+      ambientIntensity: 0.68,
+      shadowsEnabled: true,
+      autoOrbit: false
+    };
+
     this.items = []; // مصفوفة قطع الأثاث والمكونات المعمارية
     this.selectedItem = null;
     this.isDragging = false;
@@ -277,21 +289,20 @@ class RoomStudioApp {
   }
 
   initLights() {
-    this.ambientLight = new THREE.AmbientLight(0xffffff, 0.68);
+    this.ambientLight = new THREE.AmbientLight(0xffffff, this.lightingSettings.ambientIntensity);
     this.scene.add(this.ambientLight);
 
     this.hemiLight = new THREE.HemisphereLight(0xf8fafc, 0x334155, 0.45);
     this.hemiLight.position.set(0, 14, 0);
     this.scene.add(this.hemiLight);
 
-    this.dirLight = new THREE.DirectionalLight(0xfffbeb, 0.92);
-    this.dirLight.position.set(9, 15, 10);
+    this.dirLight = new THREE.DirectionalLight(0xfffbeb, this.lightingSettings.sunIntensity);
     this.dirLight.castShadow = true;
     this.dirLight.shadow.mapSize.width = 2048;
     this.dirLight.shadow.mapSize.height = 2048;
     this.dirLight.shadow.camera.near = 0.5;
-    this.dirLight.shadow.camera.far = 40;
-    const d = 11;
+    this.dirLight.shadow.camera.far = 50;
+    const d = 12;
     this.dirLight.shadow.camera.left = -d;
     this.dirLight.shadow.camera.right = d;
     this.dirLight.shadow.camera.top = d;
@@ -302,20 +313,170 @@ class RoomStudioApp {
     this.warmRoomLight = new THREE.PointLight(0xf59e0b, 0.15, 18);
     this.warmRoomLight.position.set(0, 2.8, 0);
     this.scene.add(this.warmRoomLight);
+
+    this.updateLights();
+  }
+
+  /**
+   * تحديث زوايا وألوان وشدة الإضاءة وموقع الشمس في المشهد ثلاثي الأبعاد
+   */
+  updateLights() {
+    if (!this.dirLight || !this.ambientLight) return;
+    const s = this.lightingSettings;
+
+    // 1. حساب زوايا الإضاءة بدقة (Azimuth & Elevation) باستخدام الإحداثيات الكروية
+    const azRad = THREE.MathUtils.degToRad(s.azimuth);
+    const elRad = THREE.MathUtils.degToRad(s.elevation);
+    const R = 24; // مسافة مصدر الضوء عن مركز الغرفة
+
+    const room = this.activeRoom || this.rooms[0];
+    const cx = (room ? room.offsetX : 0) / 100;
+    const cz = (room ? room.offsetZ : 0) / 100;
+
+    const lx = cx + R * Math.cos(elRad) * Math.sin(azRad);
+    const ly = Math.max(2.5, R * Math.sin(elRad));
+    const lz = cz + R * Math.cos(elRad) * Math.cos(azRad);
+
+    this.dirLight.position.set(lx, ly, lz);
+    this.dirLight.target.position.set(cx, 0, cz);
+    this.dirLight.target.updateMatrixWorld();
+
+    // 2. تحديث لون وشدة الضوء المباشر
+    this.dirLight.color.set(s.sunColor);
+    this.dirLight.intensity = s.sunIntensity;
+
+    // 3. تحديث لون وشدة الإضاءة المحيطية
+    this.ambientLight.color.set(s.ambientColor);
+    this.ambientLight.intensity = s.ambientIntensity;
+
+    // 4. تفعيل أو إيقاف الظلال
+    this.dirLight.castShadow = Boolean(s.shadowsEnabled);
+
+    // 5. ضبط كاميرا الظلال بحسب اتساع الغرفة
+    if (room) {
+      const maxDim = Math.max(room.width, room.depth) / 100;
+      const d = Math.max(12, maxDim * 1.4);
+      this.dirLight.shadow.camera.left = -d;
+      this.dirLight.shadow.camera.right = d;
+      this.dirLight.shadow.camera.top = d;
+      this.dirLight.shadow.camera.bottom = -d;
+      this.dirLight.shadow.camera.updateProjectionMatrix();
+    }
+  }
+
+  /**
+   * مزامنة حقول وأشرطة التمرير في لوحة استوديو الإضاءة
+   */
+  syncLightingInputsUI(updateSliders = true) {
+    const s = this.lightingSettings;
+    if (!s) return;
+
+    const setVal = (id, val) => {
+      const el = document.getElementById(id);
+      if (el) el.value = val;
+    };
+    const setText = (id, txt) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = txt;
+    };
+
+    if (updateSliders) {
+      setVal('light-azimuth', Math.round(s.azimuth));
+      setVal('light-elevation', Math.round(s.elevation));
+      setVal('light-intensity-sun', s.sunIntensity);
+      setVal('light-intensity-ambient', s.ambientIntensity);
+      setVal('light-sun-color', s.sunColor);
+      setVal('light-ambient-color', s.ambientColor);
+      const chk = document.getElementById('light-shadows-toggle');
+      if (chk) chk.checked = Boolean(s.shadowsEnabled);
+    }
+
+    setText('light-azimuth-val', `${Math.round(s.azimuth)}°`);
+    setText('light-elevation-val', `${Math.round(s.elevation)}°`);
+    setText('light-intensity-sun-val', Number(s.sunIntensity).toFixed(2));
+    setText('light-intensity-ambient-val', Number(s.ambientIntensity).toFixed(2));
+    setText('light-sun-hex', s.sunColor);
+    setText('light-ambient-hex', s.ambientColor);
+
+    const orbitBtn = document.getElementById('btn-toggle-auto-orbit');
+    const orbitLabel = document.getElementById('auto-orbit-label');
+    const orbitIcon = document.getElementById('auto-orbit-icon');
+    if (orbitBtn && orbitLabel && orbitIcon) {
+      if (s.autoOrbit) {
+        orbitBtn.className = 'w-full py-1.5 px-2 rounded-xl bg-amber-600 text-white border border-amber-400 text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-md';
+        orbitLabel.textContent = 'إيقاف محاكاة حركة الشمس';
+        orbitIcon.textContent = '⏸️';
+      } else {
+        orbitBtn.className = 'w-full py-1.5 px-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-amber-400 text-xs font-bold text-slate-200 transition-all flex items-center justify-center gap-1.5';
+        orbitLabel.textContent = 'تشغيل محاكاة حركة الشمس التلقائية';
+        orbitIcon.textContent = '🔄';
+      }
+    }
+  }
+
+  /**
+   * تطبيق وضع إضاءة وزوايا جاهزة
+   */
+  applyLightingPreset(presetId) {
+    const s = this.lightingSettings;
+    switch (presetId) {
+      case 'morning':
+        s.azimuth = 45;
+        s.elevation = 25;
+        s.sunColor = '#fff3e0';
+        s.ambientColor = '#f1f5f9';
+        s.sunIntensity = 1.05;
+        s.ambientIntensity = 0.65;
+        this.scene.background = new THREE.Color('#0f172a');
+        break;
+      case 'noon':
+        s.azimuth = 90;
+        s.elevation = 78;
+        s.sunColor = '#ffffff';
+        s.ambientColor = '#f8fafc';
+        s.sunIntensity = 1.15;
+        s.ambientIntensity = 0.72;
+        this.scene.background = new THREE.Color('#0f172a');
+        break;
+      case 'golden':
+        s.azimuth = 235;
+        s.elevation = 18;
+        s.sunColor = '#ffb066';
+        s.ambientColor = '#fde68a';
+        s.sunIntensity = 1.25;
+        s.ambientIntensity = 0.55;
+        this.scene.background = new THREE.Color('#1e1b4b');
+        break;
+      case 'studio':
+        s.azimuth = 145;
+        s.elevation = 48;
+        s.sunColor = '#f8fafc';
+        s.ambientColor = '#cbd5e1';
+        s.sunIntensity = 0.95;
+        s.ambientIntensity = 0.70;
+        this.scene.background = new THREE.Color('#0f172a');
+        break;
+      case 'night':
+        s.azimuth = 315;
+        s.elevation = 35;
+        s.sunColor = '#93c5fd';
+        s.ambientColor = '#1e293b';
+        s.sunIntensity = 0.35;
+        s.ambientIntensity = 0.28;
+        this.scene.background = new THREE.Color('#090d16');
+        break;
+    }
+    this.updateLights();
+    this.syncLightingInputsUI(true);
+    this.pushHistory(`إضاءة: وضع ${presetId}`);
   }
 
   setLightingMode(mode) {
     this.settings.lightingMode = mode;
     if (mode === 'night') {
-      this.scene.background = new THREE.Color('#090d16');
-      this.ambientLight.intensity = 0.28;
-      this.dirLight.intensity = 0.25;
-      this.warmRoomLight.intensity = 1.35;
+      this.applyLightingPreset('night');
     } else {
-      this.scene.background = new THREE.Color('#0f172a');
-      this.ambientLight.intensity = 0.68;
-      this.dirLight.intensity = 0.92;
-      this.warmRoomLight.intensity = 0.15;
+      this.applyLightingPreset('studio');
     }
   }
 
@@ -2223,6 +2384,137 @@ class RoomStudioApp {
         this.renderGeneratedSchemes(e.target.value);
       });
     }
+
+    // استوديو زوايا ولون الإضاءة والظلال
+    document.getElementById('btn-open-lighting-studio')?.addEventListener('click', () => {
+      this.toggleLightingStudioPanel();
+    });
+
+    document.getElementById('btn-close-lighting-studio')?.addEventListener('click', () => {
+      this.toggleLightingStudioPanel(false);
+    });
+
+    // أشرطة زوايا الإضاءة (Azimuth & Elevation)
+    const azSlider = document.getElementById('light-azimuth');
+    if (azSlider) {
+      azSlider.addEventListener('input', (e) => {
+        this.lightingSettings.azimuth = Number(e.target.value);
+        this.lightingSettings.autoOrbit = false;
+        this.updateLights();
+        this.syncLightingInputsUI(false);
+      });
+      azSlider.addEventListener('change', () => {
+        this.pushHistory('تغيير زاوية دوران الإضاءة الأفقية');
+      });
+    }
+
+    const elSlider = document.getElementById('light-elevation');
+    if (elSlider) {
+      elSlider.addEventListener('input', (e) => {
+        this.lightingSettings.elevation = Number(e.target.value);
+        this.updateLights();
+        this.syncLightingInputsUI(false);
+      });
+      elSlider.addEventListener('change', () => {
+        this.pushHistory('تغيير زاوية ميل وارتفاع الإضاءة');
+      });
+    }
+
+    // زر محاكاة دوران الشمس التلقائي
+    document.getElementById('btn-toggle-auto-orbit')?.addEventListener('click', () => {
+      this.lightingSettings.autoOrbit = !this.lightingSettings.autoOrbit;
+      this.syncLightingInputsUI(false);
+    });
+
+    // ألوان الضوء
+    const sunColorInput = document.getElementById('light-sun-color');
+    if (sunColorInput) {
+      sunColorInput.addEventListener('input', (e) => {
+        this.lightingSettings.sunColor = e.target.value;
+        this.updateLights();
+        this.syncLightingInputsUI(false);
+      });
+      sunColorInput.addEventListener('change', () => {
+        this.pushHistory('تغيير لون الضوء المباشر');
+      });
+    }
+
+    const ambientColorInput = document.getElementById('light-ambient-color');
+    if (ambientColorInput) {
+      ambientColorInput.addEventListener('input', (e) => {
+        this.lightingSettings.ambientColor = e.target.value;
+        this.updateLights();
+        this.syncLightingInputsUI(false);
+      });
+      ambientColorInput.addEventListener('change', () => {
+        this.pushHistory('تغيير لون الإضاءة المحيطية');
+      });
+    }
+
+    // أزرار حرارة الإضاءة الجاهزة (كلفن)
+    document.querySelectorAll('.light-temp-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const color = btn.getAttribute('data-temp-color');
+        if (color) {
+          this.lightingSettings.sunColor = color;
+          this.updateLights();
+          this.syncLightingInputsUI(true);
+          this.pushHistory('تغيير حرارة الإضاءة');
+        }
+      });
+    });
+
+    // أوضاع الإضاءة وزواياها الجاهزة
+    document.querySelectorAll('.light-preset-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const preset = btn.getAttribute('data-light-preset');
+        if (preset) {
+          this.applyLightingPreset(preset);
+        }
+      });
+    });
+
+    // شدة الضوء المباشر والمحيطي
+    const sunIntSlider = document.getElementById('light-intensity-sun');
+    if (sunIntSlider) {
+      sunIntSlider.addEventListener('input', (e) => {
+        this.lightingSettings.sunIntensity = Number(e.target.value);
+        this.updateLights();
+        this.syncLightingInputsUI(false);
+      });
+    }
+
+    const ambIntSlider = document.getElementById('light-intensity-ambient');
+    if (ambIntSlider) {
+      ambIntSlider.addEventListener('input', (e) => {
+        this.lightingSettings.ambientIntensity = Number(e.target.value);
+        this.updateLights();
+        this.syncLightingInputsUI(false);
+      });
+    }
+
+    // تفعيل / إيقاف الظلال
+    const shadowToggle = document.getElementById('light-shadows-toggle');
+    if (shadowToggle) {
+      shadowToggle.addEventListener('change', (e) => {
+        this.lightingSettings.shadowsEnabled = e.target.checked;
+        this.updateLights();
+        this.pushHistory('تبديل الظلال الحقيقية');
+      });
+    }
+  }
+
+  toggleLightingStudioPanel(forceState) {
+    const panel = document.getElementById('lighting-studio-panel');
+    if (!panel) return;
+    const isVisible = !panel.classList.contains('hidden');
+    const targetState = typeof forceState === 'boolean' ? forceState : !isVisible;
+    if (targetState) {
+      panel.classList.remove('hidden');
+      this.syncLightingInputsUI(true);
+    } else {
+      panel.classList.add('hidden');
+    }
   }
 
   // ==================== استوديو تناسق وتناغم الألوان وقاعدة 60-30-10 ====================
@@ -2609,6 +2901,7 @@ class RoomStudioApp {
     const payload = {
       version: '2.0',
       settings: this.settings,
+      lightingSettings: this.lightingSettings,
       room: firstRoom ? {
         width: firstRoom.width,
         depth: firstRoom.depth,
@@ -2715,6 +3008,12 @@ class RoomStudioApp {
       }
     }
 
+    if (data.lightingSettings && typeof data.lightingSettings === 'object') {
+      Object.assign(this.lightingSettings, data.lightingSettings);
+      this.updateLights();
+      this.syncLightingInputsUI(true);
+    }
+
     this.clearAllFurniture(false);
     this.rooms = normalizedRooms;
     this.activeRoomId = data.activeRoomId && this.rooms.some(rm => rm.id === data.activeRoomId)
@@ -2807,6 +3106,11 @@ class RoomStudioApp {
 
   animate() {
     requestAnimationFrame(() => this.animate());
+    if (this.lightingSettings?.autoOrbit) {
+      this.lightingSettings.azimuth = (this.lightingSettings.azimuth + 0.35) % 360;
+      this.updateLights();
+      this.syncLightingInputsUI(false);
+    }
     this.controls.update();
     this.updateSmartWallsVisibility();
     this.renderer.render(this.scene, this.activeCamera);
